@@ -1,16 +1,36 @@
-# React + Vite
+# RecipeNest - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, visually stunning web application for food lovers and chefs to share and discover gourmet recipes.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Chef Dashboard:** Manage your culinary portfolio and recipes.
+- **Food Lover View:** Browse top chefs, follow your favorites, and explore a live feed of recipes.
+- **Profile Customization:** Upload professional profile pictures directly to Cloudinary.
+- **Interactive UI:** Smooth transitions, responsive design, and real-time toast notifications.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React:** Core library for building the user interface.
+- **Vite:** High-performance frontend build tool.
+- **Lucide-React:** For beautiful, clean icons.
+- **Context API:** Centralized authentication and state management.
 
-## Expanding the ESLint configuration
+## 📦 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1.  **Clone the Repo:**
+    ```bash
+    git clone https://github.com/Rohan-shah1/webAssignment.git
+    cd recipenest-frontend
+    ```
+2.  **Install Dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Run Development Server:**
+    ```bash
+    npm run dev
+    ```
+
+## 🔐 Credentials Protection
+*Note: Sensitive information is kept in local `.env` files which are excluded from this repository for security.*
