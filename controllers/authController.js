@@ -81,19 +81,23 @@ const loginUser = async (req, res) => {
 // @route   GET /api/auth/profile
 // @access  Private
 const getUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
-
-  if (user) {
-    res.json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      bio: user.bio,
-      profilePicture: user.profilePicture,
-    });
-  } else {
-    res.status(404).json({ message: 'User not found' });
+  try {
+    // req.user is already populated by the 'protect' middleware
+    if (req.user) {
+      res.json({
+        _id: req.user._id,
+        username: req.user.username,
+        email: req.user.email,
+        role: req.user.role,
+        bio: req.user.bio,
+        profilePicture: req.user.profilePicture,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Get Profile Error:', error);
+    res.status(500).json({ message: 'Server error fetching profile' });
   }
 };
 
@@ -101,61 +105,86 @@ const getUserProfile = async (req, res) => {
 // @route   PUT /api/auth/profile
 // @access  Private
 const updateUserProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
+  try {
+    const user = await User.findById(req.user._id);
 
-  if (user) {
-    user.username = req.body.username || user.username;
-    user.email = req.body.email || user.email;
-    user.bio = req.body.bio || user.bio;
+    if (user) {
+      user.username = req.body.username || user.username;
+      user.email = req.body.email || user.email;
+      user.bio = req.body.bio !== undefined ? req.body.bio : user.bio;
 
-    // Handle file upload to Cloudinary if a file is present
-    if (req.file) {
+      if (req.body.password) {
+        user.password = req.body.password;
+      }
+
+      // 1. Run validation BEFORE Cloudinary upload
       try {
-        const streamUpload = (req) => {
-          return new Promise((resolve, reject) => {
-            const stream = cloudinary.uploader.upload_stream({ folder: 'profile_picture' }, (error, result) => {
-              if (result) {
-                resolve(result);
-              } else {
-                reject(error);
-              }
-            });
-            Readable.from(req.file.buffer).pipe(stream);
-          });
-        };
+        await user.validate();
+      } catch (validationError) {
+        console.error('Validation Error before upload:', validationError);
+        return res.status(400).json({
+          message: 'Validation failed',
+          error: validationError.message
+        });
+      }
 
-        const result = await streamUpload(req);
-        user.profilePicture = result.secure_url;
-      } catch (error) {
-        console.error('Cloudinary Upload Error:', error);
-        return res.status(500).json({ message: 'Error uploading image to Cloudinary', error: error.message });
+      // 2. Handle file upload to Cloudinary ONLY if validation passed
+      if (req.file) {
+        try {
+          const streamUpload = (req) => {
+            return new Promise((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream({ folder: 'profile_picture' }, (error, result) => {
+                if (result) {
+                  resolve(result);
+                } else {
+                  reject(error);
+                }
+              });
+              Readable.from(req.file.buffer).pipe(stream);
+            });
+          };
+
+          const result = await streamUpload(req);
+          user.profilePicture = result.secure_url;
+        } catch (error) {
+          console.error('Cloudinary Upload Error:', error);
+          return res.status(500).json({ message: 'Error uploading image to Cloudinary', error: error.message });
+        }
+      } else if (req.body.profilePicture) {
+        user.profilePicture = req.body.profilePicture;
+      }
+
+      // 3. Final save
+      try {
+        const updatedUser = await user.save();
+        console.log('User saved successfully:', updatedUser._id);
+        console.log('New profilePicture in DB:', updatedUser.profilePicture);
+
+        res.json({
+          _id: updatedUser._id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          bio: updatedUser.bio,
+          profilePicture: updatedUser.profilePicture,
+          token: generateToken(updatedUser._id),
+        });
+      } catch (saveError) {
+        res.status(500).json({
+          message: 'Error saving profile',
+          error: saveError.message,
+          stack: saveError.stack
+        });
       }
     } else {
-      user.profilePicture = req.body.profilePicture || user.profilePicture;
+      res.status(404).json({ message: 'User not found' });
     }
-
-    if (req.body.password) {
-      user.password = req.body.password;
-    }
-
-    try {
-      const updatedUser = await user.save();
-
-      res.json({
-        _id: updatedUser._id,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        bio: updatedUser.bio,
-        profilePicture: updatedUser.profilePicture,
-        token: generateToken(updatedUser._id),
-      });
-    } catch (saveError) {
-      console.error('Profile Save Error:', saveError);
-      res.status(500).json({ message: 'Error saving profile', error: saveError.message });
-    }
-  } else {
-    res.status(404).json({ message: 'User not found' });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Server error updating profile',
+      error: error.message,
+      stack: error.stack
+    });
   }
 };
 

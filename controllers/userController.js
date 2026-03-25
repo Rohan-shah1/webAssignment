@@ -19,13 +19,19 @@ const getChefs = async (req, res) => {
 const getChefById = async (req, res) => {
   try {
     const chef = await User.findById(req.params.id).select('-password');
-    if (chef && chef.role === 'Chef') {
-      const recipes = await Recipe.find({ chef: chef._id });
-      res.json({ chef, recipes });
-    } else {
-      res.status(404).json({ message: 'Chef not found' });
+
+    if (!chef) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    if (chef.role !== 'Chef') {
+      return res.status(404).json({ message: 'User is not a chef' });
+    }
+
+    const recipes = await Recipe.find({ chef: chef._id });
+    res.json({ chef, recipes });
   } catch (error) {
+    console.error('Get Chef Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };
