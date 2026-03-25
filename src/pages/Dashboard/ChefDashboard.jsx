@@ -11,7 +11,8 @@ const ChefDashboard = () => {
   const { userInfo, login, logout } = useAuth();
 
   const isFoodLover = userInfo?.role === 'Food Lover' || userInfo?.role === 'Normal User';
-  const [activeTab, setActiveTab] = useState(isFoodLover ? 'browse' : 'recipes');
+  const isAdmin = userInfo?.role === 'Admin';
+  const [activeTab, setActiveTab] = useState(isFoodLover ? 'browse' : (isAdmin ? 'profile' : 'recipes'));
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(!isFoodLover);
   const [showModal, setShowModal] = useState(false);
@@ -89,14 +90,15 @@ const ChefDashboard = () => {
       login(updated); // Uses AuthContext login to update global state
       toast.success('Profile updated successfully!');
     } catch (error) {
-      toast.error('Failed to update profile');
+      console.error('Profile Update Error:', error);
+      toast.error(error.message || 'Failed to update profile');
     }
   };
 
   useEffect(() => {
     const fetchMyRecipes = async () => {
-      // Don't fetch if userInfo is null or if user is a Food Lover
-      if (!userInfo || isFoodLover) return; 
+      // Don't fetch if userInfo is null, if user is a Food Lover, or if user is an Admin
+      if (!userInfo || isFoodLover || isAdmin) return; 
       
       try {
         setLoading(true);
@@ -256,7 +258,7 @@ const ChefDashboard = () => {
                 <Users size={20} /> Followed Chefs
               </button>
             )}
-            {!isFoodLover && (
+            {!isFoodLover && !isAdmin && (
               <button 
                 className={`nav-item ${activeTab === 'recipes' ? 'active' : ''}`}
                 onClick={() => setActiveTab('recipes')}

@@ -18,6 +18,7 @@ const fetchWithAuth = async (endpoint, options = {}) => {
     headers.Authorization = `Bearer ${userInfo.token}`;
   }
 
+  console.log(`API Request: ${options.method || 'GET'} ${BASE_URL}${endpoint}`);
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
@@ -87,6 +88,11 @@ export const addComment = (id, text) =>
 export const adminGetUsers = () => fetchWithAuth('/admin/users');
 export const adminDeleteUser = (id) => fetchWithAuth(`/admin/users/${id}`, { method: 'DELETE' });
 export const adminGetRecipes = () => fetchWithAuth('/admin/recipes');
+export const adminUpdateProfile = (userData) => 
+  fetchWithAuth('/admin/profile', { 
+    method: 'PUT', 
+    body: userData 
+  });
 
 const API = {
   login,
@@ -105,6 +111,7 @@ const API = {
   adminGetUsers,
   adminDeleteUser,
   adminGetRecipes,
+  adminUpdateProfile,
 };
 
 export default API;

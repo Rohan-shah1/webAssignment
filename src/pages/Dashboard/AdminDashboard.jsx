@@ -1,18 +1,35 @@
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, Trash2, ShieldCheck } from 'lucide-react';
+import { Users, BookOpen, Trash2, ShieldCheck, Settings, LogOut } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import './Dashboard.css'; // Reuse dashboard styles
 
 const AdminDashboard = () => {
+  const { userInfo, login, logout } = useAuth();
   const [users, setUsers] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('users');
 
+  const [profileData, setProfileData] = useState({
+    username: userInfo?.username || '',
+    bio: userInfo?.bio || '',
+  });
+  const [profileImage, setProfileImage] = useState(null);
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (userInfo) {
+      setProfileData({
+        username: userInfo.username || '',
+        bio: userInfo.bio || '',
+      });
+    }
+  }, [userInfo]);
 
   const fetchData = async () => {
     try {
@@ -39,6 +56,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData();
+      formData.append('username', profileData.username);
+      formData.append('bio', profileData.bio);
+      if (profileImage) {
+        formData.append('profilePicture', profileImage);
+      }
+      
+      const updated = await API.adminUpdateProfile(formData);
+      console.log('Profile update response:', updated);
+      login(updated);
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      console.error('Admin Profile Update Error:', error);
+      toast.error(error.message || 'Failed to update profile');
+    }
+  };
+
   const deleteRecipe = async (id) => {
     if (window.confirm('Delete this recipe?')) {
       try {
@@ -49,6 +86,12 @@ const AdminDashboard = () => {
         toast.error('Failed to delete recipe');
       }
     }
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.success('Logged out successfully');
+    window.location.href = '/';
   };
 
   return (
@@ -74,6 +117,15 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab('recipes')}
             >
               <BookOpen size={20} /> Global Recipes
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              <Settings size={20} /> Profile Settings
+            </button>
+            <button className="nav-item text-danger mt-auto" onClick={handleLogout}>
+              <LogOut size={20} /> Log Out
             </button>
           </nav>
         </aside>
@@ -108,7 +160,7 @@ const AdminDashboard = () => {
                 </table>
               </div>
             </div>
-          ) : (
+          ) : activeTab === 'recipes' ? (
             <div className="dashboard-panel">
               <h2>Global Recipes ({recipes.length})</h2>
               <div className="header-line-sm mb-4"></div>
@@ -125,6 +177,41 @@ const AdminDashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="dashboard-panel">
+              <h2>Edit Profile</h2>
+              <div className="header-line-sm mb-4"></div>
+              <form className="profile-form" onSubmit={handleUpdateProfile}>
+                <div className="form-group">
+                  <label>Full Name / Username</label>
+                  <input 
+                    type="text" 
+                    value={profileData.username} 
+                    onChange={e => setProfileData({...profileData, username: e.target.value})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Bio</label>
+                  <textarea 
+                    rows="4" 
+                    value={profileData.bio}
+                    onChange={e => setProfileData({...profileData, bio: e.target.value})}
+                  ></textarea>
+                </div>
+                <div className="form-group">
+                  <label>Profile Picture</label>
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={e => setProfileImage(e.target.files[0])}
+                  />
+                  <p className="text-secondary mt-1" style={{ fontSize: '0.8rem' }}>
+                    Leave empty to keep current picture.
+                  </p>
+                </div>
+                <button type="submit" className="btn-primary mt-4">Save Changes</button>
+              </form>
             </div>
           )}
         </main>
