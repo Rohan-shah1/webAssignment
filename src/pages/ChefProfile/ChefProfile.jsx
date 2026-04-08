@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MapPin, ChefHat, Instagram, Twitter, Mail, BookOpen, Heart, MessageSquare, Send } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { jsPDF } from 'jspdf';
 import './ChefProfile.css';
 
 import API from '../../api';
@@ -45,6 +47,55 @@ const ChefProfile = () => {
     }
   };
 
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: activeRecipe.title,
+          text: `Check out this recipe for ${activeRecipe.title}!`,
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (!activeRecipe) return;
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text(activeRecipe.title, 20, 20);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Difficulty: ${activeRecipe.difficulty} | Prep Time: ${activeRecipe.time} | Category: ${activeRecipe.category}`, 20, 30);
+
+    doc.setFont("helvetica", "bold");
+    doc.text("Ingredients:", 20, 45);
+    doc.setFont("helvetica", "normal");
+    let y = 55;
+    activeRecipe.ingredients.forEach((ing) => {
+      doc.text(`- ${ing}`, 25, y);
+      y += 8;
+    });
+
+    y += 10;
+    doc.setFont("helvetica", "bold");
+    doc.text("Instructions:", 20, y);
+    doc.setFont("helvetica", "normal");
+    y += 10;
+    const splitInstructions = doc.splitTextToSize(activeRecipe.description, 170);
+    doc.text(splitInstructions, 20, y);
+
+    doc.save(`${activeRecipe.title.replace(/\s+/g, '_')}_Recipe.pdf`);
+    toast.success('PDF Downloaded');
+  };
+
   useEffect(() => {
     const fetchChef = async () => {
       try {
@@ -64,8 +115,9 @@ const ChefProfile = () => {
             id: r._id,
             title: r.title,
             image: r.image || 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-            time: 'Check directions',
-            difficulty: 'Gourmet',
+            time: r.prepTime ? `${r.prepTime} min` : 'Check directions',
+            difficulty: r.difficulty || 'Medium',
+            category: r.category || 'Other',
             description: r.instructions,
             ingredients: r.ingredients,
             likes: r.likes || [],
@@ -180,11 +232,9 @@ const ChefProfile = () => {
                 ))}
               </ul>
               <h4>Instructions</h4>
-              <ol className="mb-4">
-                <li>Preheat oven and prepare ingredients.</li>
-                <li>Cook according to the chef's secret steps.</li>
-                <li>Serve hot and enjoy!</li>
-              </ol>
+              <div className="mb-4" style={{ whiteSpace: 'pre-wrap' }}>
+                {activeRecipe.description}
+              </div>
               <div className="modal-interactions mt-8">
                 <div className="interaction-counts mb-4 flex-align">
                   <button 
@@ -227,8 +277,8 @@ const ChefProfile = () => {
               </div>
 
               <div className="modal-actions mt-8">
-                <button className="btn-primary">Download PDF</button>
-                <button className="btn-outline">Share Recipe</button>
+                <button className="btn-primary" onClick={handleDownloadPDF}>Download PDF</button>
+                <button className="btn-outline" onClick={handleShare}>Share Recipe</button>
               </div>
             </div>
           </div>

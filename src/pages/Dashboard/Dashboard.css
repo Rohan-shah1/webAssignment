@@ -224,3 +224,66 @@
     gap: 1rem;
   }
 }
+
+/* Modern Recipe Modal UX */
+.recipe-modal-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  padding: 2rem 2.5rem;
+  margin: -2.5rem -2.5rem 2rem -2.5rem;
+  border-radius: 16px 16px 0 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.recipe-modal-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.recipe-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.recipe-form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+  display: block;
+}
+
+.modern-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--surface-color);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.1);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}

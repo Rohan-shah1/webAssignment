@@ -26,7 +26,11 @@ const Login = () => {
       login(data);
       toast.success('Login successful! Welcome back.');
       setTimeout(() => {
-        navigate('/dashboard');
+        if (data.role === 'Admin') {
+          navigate('/admin');
+        } else {
+          navigate('/dashboard');
+        }
       }, 1500);
     } catch (error) {
       toast.error(error.message || 'Login failed');

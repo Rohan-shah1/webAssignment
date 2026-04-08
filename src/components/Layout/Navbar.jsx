@@ -15,10 +15,14 @@ const Navbar = ({ theme, toggleTheme }) => {
         </Link>
         <div className="navbar-links">
           <Link to="/" className="nav-link">Chefs List</Link>
+          <Link to="/recipes" className="nav-link">Recipes</Link>
           {userInfo ? (
             <>
-              {userInfo.role === 'Admin' && <Link to="/admin" className="nav-link">Admin</Link>}
-              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              {userInfo.role === 'Admin' ? (
+                <Link to="/admin" className="nav-link">Dashboard</Link>
+              ) : (
+                <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              )}
             </>
           ) : (
             <>

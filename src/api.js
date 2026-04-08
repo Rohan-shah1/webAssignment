@@ -1,6 +1,7 @@
-const BASE_URL = 'http://localhost:5000/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const fetchWithAuth = async (endpoint, options = {}) => {
+  // Retrieval of user credentials from local storage
   const userInfo = localStorage.getItem('userInfo') 
     ? JSON.parse(localStorage.getItem('userInfo')) 
     : null;
@@ -9,11 +10,12 @@ const fetchWithAuth = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
-  // Only set Content-Type if the body is NOT FormData
+  // Content-Type header excluded for FormData to allow browser-specific boundary setting
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
+  // JWT token attachment for backend authentication verification
   if (userInfo && userInfo.token) {
     headers.Authorization = `Bearer ${userInfo.token}`;
   }
@@ -33,7 +35,7 @@ const fetchWithAuth = async (endpoint, options = {}) => {
   return data;
 };
 
-// Auth APIs
+// --- Auth APIs --- //
 export const login = (email, password) => 
   fetchWithAuth('/auth/login', { 
     method: 'POST', 
@@ -57,19 +59,20 @@ export const updateProfile = (userData) =>
 export const getChefs = () => fetchWithAuth('/users/chefs');
 export const getChefDetails = (id) => fetchWithAuth(`/users/chefs/${id}`);
 
-// Recipe APIs
-export const fetchRecipes = () => fetchWithAuth('/recipes');
+// --- Recipe APIs --- //
+// Execution of recipe data retrieval with optional query parameters
+export const fetchRecipes = (query = '') => fetchWithAuth(`/recipes${query}`);
 export const fetchRecipeById = (id) => fetchWithAuth(`/recipes/${id}`);
 export const createRecipe = (recipeData) => 
   fetchWithAuth('/recipes', { 
     method: 'POST', 
-    body: JSON.stringify(recipeData) 
+    body: recipeData instanceof FormData ? recipeData : JSON.stringify(recipeData)
   });
 
 export const updateRecipe = (id, recipeData) => 
   fetchWithAuth(`/recipes/${id}`, { 
     method: 'PUT', 
-    body: JSON.stringify(recipeData) 
+    body: recipeData instanceof FormData ? recipeData : JSON.stringify(recipeData) 
   });
 
 export const deleteRecipe = (id) => 

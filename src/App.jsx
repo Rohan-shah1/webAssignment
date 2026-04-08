@@ -3,6 +3,7 @@ import Navbar from './components/Layout/Navbar';
 import Footer from './components/Layout/Footer';
 import ToastProvider from './components/Layout/ToastProvider';
 import ChefList from './pages/Home/ChefList';
+import RecipeFeed from './pages/Home/RecipeFeed';
 import ChefProfile from './pages/ChefProfile/ChefProfile';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
@@ -31,6 +32,7 @@ function AppContent() {
       <main style={{ minHeight: 'calc(100vh - 140px)' }}>
         <Routes>
           <Route path="/" element={<ChefList />} />
+          <Route path="/recipes" element={<RecipeFeed />} />
           <Route path="/chef/:id" element={<ChefProfile />} />
           <Route path="/dashboard" element={userInfo ? <ChefDashboard /> : <Login />} />
           <Route path="/admin" element={userInfo?.role === 'Admin' ? <AdminDashboard /> : <Login />} />
