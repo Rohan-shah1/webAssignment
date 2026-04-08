@@ -11,8 +11,10 @@ connectDB();
 
 const app = express();
 
-// Middleware
+// --- Middleware Setup --- //
+// Parse incoming JSON request bodies
 app.use(express.json());
+// Enable cross-origin resource sharing for frontend communication
 app.use(cors());
 
 // Routes

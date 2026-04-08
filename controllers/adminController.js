@@ -5,7 +5,7 @@ const Recipe = require('../models/Recipe');
 // @route   GET /api/admin/users
 // @access  Private/Admin
 const getAllUsers = async (req, res) => {
-  const users = await User.find({}).select('-password');
+  const users = await User.find({ role: { $ne: 'Admin' } }).select('-password');
   res.json(users);
 };
 

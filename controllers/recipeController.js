@@ -1,20 +1,37 @@
 const Recipe = require('../models/Recipe');
+const cloudinary = require('../config/cloudinary');
+const { Readable } = require('stream');
 
-// @desc    Get all recipes
-// @route   GET /api/recipes
-// @access  Public
+// GET /api/recipes - Fetch all recipes with optional filters (search, category, difficulty)
 const getRecipes = async (req, res) => {
   try {
-    const recipes = await Recipe.find({}).populate('chef', 'username profilePicture');
+    const { search, category, difficulty } = req.query;
+
+    let query = {};
+    
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { ingredients: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (category) {
+      query.category = category;
+    }
+    
+    if (difficulty) {
+      query.difficulty = difficulty;
+    }
+
+    const recipes = await Recipe.find(query).populate('chef', 'username profilePicture');
     res.json(recipes);
   } catch (error) {
     res.status(500).json({ message: 'Server Error' });
   }
 };
 
-// @desc    Get single recipe
-// @route   GET /api/recipes/:id
-// @access  Public
+// GET /api/recipes/:id - Fetch a single recipe by ID
 const getRecipeById = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id).populate('chef', 'username profilePicture bio');
@@ -28,18 +45,41 @@ const getRecipeById = async (req, res) => {
   }
 };
 
-// @desc    Create a recipe
-// @route   POST /api/recipes
-// @access  Private (Chef Admin)
+// POST /api/recipes - Create a new recipe (Requires Chef or Admin role)
 const createRecipe = async (req, res) => {
   try {
-    const { title, ingredients, instructions, image } = req.body;
+    const { title, ingredients, instructions, image, category, difficulty, prepTime } = req.body;
+
+    let imageUrl = image;
+
+    // Process image file attachment if provided by the client
+    if (req.file) {
+      // Cloudinary stream upload wrapped in a Promise to return the secure URL.
+      // A raw memory buffer pipeline is constructed to transfer data to the cloud.
+      const streamUpload = (req) => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream({ folder: 'recipes' }, (error, result) => {
+            if (result) {
+              resolve(result);
+            } else {
+              reject(error);
+            }
+          });
+          Readable.from(req.file.buffer).pipe(stream);
+        });
+      };
+      const result = await streamUpload(req);
+      imageUrl = result.secure_url;
+    }
 
     const recipe = new Recipe({
       title,
       ingredients,
       instructions,
-      image,
+      image: imageUrl,
+      category,
+      difficulty,
+      prepTime,
       chef: req.user._id,
     });
 
@@ -50,12 +90,10 @@ const createRecipe = async (req, res) => {
   }
 };
 
-// @desc    Update a recipe
-// @route   PUT /api/recipes/:id
-// @access  Private (Chef)
+// PUT /api/recipes/:id - Update an existing recipe (Requires Chef Owner or Admin)
 const updateRecipe = async (req, res) => {
   try {
-    const { title, ingredients, instructions, image } = req.body;
+    const { title, ingredients, instructions, image, category, difficulty, prepTime } = req.body;
 
     const recipe = await Recipe.findById(req.params.id);
 
@@ -65,10 +103,34 @@ const updateRecipe = async (req, res) => {
         return res.status(403).json({ message: 'Not authorized to update this recipe' });
       }
 
+      let imageUrl = recipe.image;
+      
+      if (req.file) {
+        const streamUpload = (req) => {
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream({ folder: 'recipes' }, (error, result) => {
+              if (result) {
+                resolve(result);
+              } else {
+                reject(error);
+              }
+            });
+            Readable.from(req.file.buffer).pipe(stream);
+          });
+        };
+        const result = await streamUpload(req);
+        imageUrl = result.secure_url;
+      } else if (image !== undefined) {
+        imageUrl = image;
+      }
+
       recipe.title = title || recipe.title;
       recipe.ingredients = ingredients || recipe.ingredients;
       recipe.instructions = instructions || recipe.instructions;
-      recipe.image = image || recipe.image;
+      recipe.image = imageUrl;
+      recipe.category = category || recipe.category;
+      recipe.difficulty = difficulty || recipe.difficulty;
+      recipe.prepTime = prepTime !== undefined ? prepTime : recipe.prepTime;
 
       const updatedRecipe = await recipe.save();
       res.json(updatedRecipe);
@@ -80,9 +142,7 @@ const updateRecipe = async (req, res) => {
   }
 };
 
-// @desc    Delete a recipe
-// @route   DELETE /api/recipes/:id
-// @access  Private (Chef)
+// DELETE /api/recipes/:id - Delete a recipe (Requires Chef Owner or Admin)
 const deleteRecipe = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -102,9 +162,7 @@ const deleteRecipe = async (req, res) => {
   }
 };
 
-// @desc    Like a recipe
-// @route   PUT /api/recipes/:id/like
-// @access  Private
+// PUT /api/recipes/:id/like - Toggle like on a recipe (Requires Authentication)
 const likeRecipe = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -128,9 +186,7 @@ const likeRecipe = async (req, res) => {
   }
 };
 
-// @desc    Add comment to recipe
-// @route   POST /api/recipes/:id/comment
-// @access  Private
+// POST /api/recipes/:id/comment - Add a comment to a recipe (Requires Authentication)
 const addComment = async (req, res) => {
   try {
     const { text } = req.body;

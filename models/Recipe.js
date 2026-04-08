@@ -22,6 +22,20 @@ const recipeSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  category: {
+    type: String,
+    enum: ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Other'],
+    default: 'Other',
+  },
+  difficulty: {
+    type: String,
+    enum: ['Easy', 'Medium', 'Hard'],
+    default: 'Medium',
+  },
+  prepTime: {
+    type: Number,
+    default: 0,
+  },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'

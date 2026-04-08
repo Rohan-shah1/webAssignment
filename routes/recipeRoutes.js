@@ -10,14 +10,15 @@ const {
   addComment
 } = require('../controllers/recipeController');
 const { protect, chefOnly } = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 router.route('/')
   .get(getRecipes)
-  .post(protect, chefOnly, createRecipe);
+  .post(protect, chefOnly, upload.single('image'), createRecipe);
 
 router.route('/:id')
   .get(getRecipeById)
-  .put(protect, chefOnly, updateRecipe)
+  .put(protect, chefOnly, upload.single('image'), updateRecipe)
   .delete(protect, chefOnly, deleteRecipe);
 
 router.put('/:id/like', protect, likeRecipe);
