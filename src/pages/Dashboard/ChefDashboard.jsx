@@ -1,23 +1,28 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, BookOpen, Settings, LogOut, Plus, Edit2, Trash2, Compass, Users } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import './Dashboard.css';
 import { useAuth } from '../../context/AuthContext';
 import ChefList from '../Home/ChefList';
 
 import API from '../../api';
 
+const Icon = ({ name, size = 20, filter = 'var(--icon-filter)', className = "" }) => (
+  <img 
+    src={`https://unpkg.com/lucide-static@latest/icons/${name}.svg`} 
+    alt={name} 
+    style={{ width: size, height: size, filter }} 
+    className={className}
+  />
+);
+
 const ChefDashboard = () => {
-  // Authentication context and helpers for user session management
   const { userInfo, login, logout } = useAuth();
 
-  // Access control flags based on the user's role
   const isFoodLover = userInfo?.role === 'Food Lover' || userInfo?.role === 'Normal User';
   const isAdmin = userInfo?.role === 'Admin';
-  // Initial tab selection determined by user role
   const [activeTab, setActiveTab] = useState(isFoodLover ? 'browse' : (isAdmin ? 'profile' : 'recipes'));
   
-  // State variables for recipe collection and UI status
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(!isFoodLover);
   const [showModal, setShowModal] = useState(false);
@@ -25,30 +30,26 @@ const ChefDashboard = () => {
   const [currentRecipeId, setCurrentRecipeId] = useState(null);
   const [recipeData, setRecipeData] = useState({ title: '', ingredients: '', instructions: '', category: 'Other', difficulty: 'Medium', prepTime: '' });
 
-  // Local state for profile and image management
   const [profileData, setProfileData] = useState({
     username: userInfo?.username || '',
     bio: userInfo?.bio || '',
   });
   const [profileImage, setProfileImage] = useState(null);
   const [recipeImage, setRecipeImage] = useState(null);
+  const [followedChefs, setFollowedChefs] = useState([]);
+  const [followedLoading, setFollowedLoading] = useState(false);
 
-  // Fallback UI while authentication data is being resolved
   if (!userInfo) {
     return <div className="dashboard-page container py-8 text-center text-secondary">Loading dashboard...</div>;
   }
 
-  // Submission handler for creating or updating recipe data
   const handleRecipeSubmit = async (e) => {
-    // Intercept standard form submission to process through React
     e.preventDefault();
     try {
-      // Ingredient string normalization for backend storage format
       const formattedIngredients = typeof recipeData.ingredients === 'string'
         ? recipeData.ingredients.split(',').map(i => i.trim()).join(',')
         : recipeData.ingredients;
 
-      // FormData construction to support multipart uploads for images
       const formData = new FormData();
       formData.append('title', recipeData.title);
       formData.append('ingredients', formattedIngredients);
@@ -57,10 +58,7 @@ const ChefDashboard = () => {
       formData.append('difficulty', recipeData.difficulty);
       formData.append('prepTime', recipeData.prepTime || 0);
 
-      // Attachment of binary image data if selected
-      if (recipeImage) {
-        formData.append('image', recipeImage);
-      }
+      if (recipeImage) formData.append('image', recipeImage);
 
       if (isEditing) {
         const updated = await API.updateRecipe(currentRecipeId, formData);
@@ -79,7 +77,6 @@ const ChefDashboard = () => {
     }
   };
 
-  // Clears the recipe form state to prevent data carryover
   const resetRecipeForm = () => {
     setRecipeData({ title: '', ingredients: '', instructions: '', category: 'Other', difficulty: 'Medium', prepTime: '' });
     setRecipeImage(null);
@@ -87,11 +84,9 @@ const ChefDashboard = () => {
     setCurrentRecipeId(null);
   };
 
-  // Populates the form with existing data for the selected recipe or editing
   const openEditModal = (recipe) => {
     setRecipeData({
       title: recipe.title,
-      // Conversion of array back to string for editable textarea
       ingredients: recipe.ingredients.join(', '),
       instructions: recipe.instructions,
       category: recipe.category || 'Other',
@@ -104,36 +99,27 @@ const ChefDashboard = () => {
     setShowModal(true);
   };
 
-
-  // Synchronizes user profile modifications with the backend
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
       const formData = new FormData();
       formData.append('username', profileData.username);
       formData.append('bio', profileData.bio);
-      if (profileImage) {
-        formData.append('profilePicture', profileImage);
-      }
+      if (profileImage) formData.append('profilePicture', profileImage);
 
       const updated = await API.updateProfile(formData);
-      login(updated); // Immediate update of the global authentication state
+      login(updated);
       toast.success('Profile updated successfully!');
     } catch (error) {
-      console.error('Profile Update Error:', error);
       toast.error(error.message || 'Failed to update profile');
     }
   };
 
-  // Component effect to fetch personal recipe collection upon mount or user change
   useEffect(() => {
     const fetchMyRecipes = async () => {
-      // Fetching skipped for Food Lovers or Admins as they lack personal recipe management in this context
       if (!userInfo || isFoodLover || isAdmin) return;
-
       try {
         setLoading(true);
-        // Retrieval of populated recipe data for the current user
         const data = await API.getChefDetails(userInfo._id);
         setRecipes(data.recipes);
       } catch (error) {
@@ -145,14 +131,28 @@ const ChefDashboard = () => {
     fetchMyRecipes();
   }, [userInfo, isFoodLover, isAdmin]);
 
-  // Clears session and redirects browser to the home route
+  useEffect(() => {
+    const fetchFollowed = async () => {
+      if (!isFoodLover) return;
+      try {
+        setFollowedLoading(true);
+        const data = await API.getFollowedChefs();
+        setFollowedChefs(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching followed chefs:', error);
+      } finally {
+        setFollowedLoading(false);
+      }
+    };
+    fetchFollowed();
+  }, [isFoodLover]);
+
   const handleLogout = () => {
     logout();
     toast.success('Logged out successfully');
     window.location.href = '/';
   };
 
-  // Permanently removes a recipe after a confirmation check
   const deleteRecipe = async (id) => {
     try {
       if (window.confirm('Are you sure you want to delete this recipe?')) {
@@ -165,7 +165,6 @@ const ChefDashboard = () => {
     }
   };
 
-  // Conditional rendering logic for different dashboard tab panels
   const renderContent = () => {
     if (activeTab === 'recipes') {
       return (
@@ -173,7 +172,7 @@ const ChefDashboard = () => {
           <div className="panel-header">
             <h2>Recipe Management</h2>
             <button className="btn-primary flex-align" onClick={() => setShowModal(true)}>
-              <Plus size={18} className="mr-2" /> Add New Recipe
+              <Icon name="plus" size={18} filter="white" className="mr-2" /> Add New Recipe
             </button>
           </div>
           <div className="header-line-sm mb-4"></div>
@@ -189,8 +188,12 @@ const ChefDashboard = () => {
                   </div>
                 </div>
                 <div className="recipe-actions">
-                  <button className="btn-icon text-primary" onClick={() => openEditModal(recipe)}><Edit2 size={18} /></button>
-                  <button className="btn-icon text-danger" onClick={() => deleteRecipe(recipe._id)}><Trash2 size={18} /></button>
+                  <button className="btn-icon text-primary" onClick={() => openEditModal(recipe)}>
+                    <Icon name="edit-2" size={18} filter="var(--primary-color)" />
+                  </button>
+                  <button className="btn-icon text-danger" onClick={() => deleteRecipe(recipe._id)}>
+                    <Icon name="trash-2" size={18} filter="#ef4444" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -202,7 +205,7 @@ const ChefDashboard = () => {
 
     if (activeTab === 'browse') {
       return (
-        <div className="dashboard-panel p-0" style={{ backgroundColor: 'transparent', boxShadow: 'none' }}>
+        <div className="dashboard-panel p-0 clean-panel">
           <ChefList isDashboardMode={true} />
         </div>
       );
@@ -215,11 +218,31 @@ const ChefDashboard = () => {
             <h2>Followed Chefs</h2>
           </div>
           <div className="header-line-sm mb-4"></div>
-          <div className="text-center py-8 text-secondary">
-            <Users size={48} className="mx-auto mb-4 opacity-50" />
-            <p>You haven't followed any chefs yet.</p>
-            <button className="btn-outline mt-4" onClick={() => setActiveTab('browse')}>Discover Chefs</button>
-          </div>
+          {followedLoading ? (
+            <div className="text-center py-8 text-secondary">
+              <p>Loading followed chefs...</p>
+            </div>
+          ) : followedChefs.length === 0 ? (
+            <div className="text-center py-8 text-secondary">
+              <Icon name="users" size={48} className="mx-auto mb-4 opacity-50" />
+              <p>You haven't followed any chefs yet.</p>
+              <button className="btn-outline mt-4" onClick={() => setActiveTab('browse')}>Discover Chefs</button>
+            </div>
+          ) : (
+            <div className="recipe-list">
+              {followedChefs.map((chef) => (
+                <Link to={`/chef/${chef._id}`} key={chef._id} className="dashboard-recipe-card ds-link-card">
+                  <div className="recipe-summary">
+                    <h3>{chef.username}</h3>
+                    <p className="text-secondary text-sm">{chef.bio || 'Professional chef on RecipeNest.'}</p>
+                  </div>
+                  <div className="recipe-actions">
+                    <span className="btn-outline btn-sm">View Profile</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
@@ -253,7 +276,7 @@ const ChefDashboard = () => {
                 accept="image/*"
                 onChange={e => setProfileImage(e.target.files[0])}
               />
-              <p className="text-secondary mt-1" style={{ fontSize: '0.8rem' }}>
+              <p className="text-secondary mt-1 profile-help-text">
                 Leave empty to keep current picture. Recommended size: 500x500px.
               </p>
             </div>
@@ -264,11 +287,9 @@ const ChefDashboard = () => {
     }
   };
 
-  // Main component layout with sidebar navigation and dynamic panel display
   return (
     <div className="dashboard-page container py-8">
       <div className="dashboard-layout">
-        {/* Sidebar navigation section */}
         <aside className="dashboard-sidebar">
           <div className="sidebar-header">
             <div className="chef-avatar-small">
@@ -279,13 +300,12 @@ const ChefDashboard = () => {
           </div>
 
           <nav className="sidebar-nav">
-            {/* Search options displayed for food lover roles */}
             {isFoodLover && (
               <button
                 className={`nav-item ${activeTab === 'browse' ? 'active' : ''}`}
                 onClick={() => setActiveTab('browse')}
               >
-                <Compass size={20} /> Browse Chefs
+                <Icon name="compass" size={20} /> Browse Chefs
               </button>
             )}
             {isFoodLover && (
@@ -293,44 +313,41 @@ const ChefDashboard = () => {
                 className={`nav-item ${activeTab === 'followed' ? 'active' : ''}`}
                 onClick={() => setActiveTab('followed')}
               >
-                <Users size={20} /> Followed Chefs
+                <Icon name="users" size={20} /> Followed Chefs
               </button>
             )}
-            {/* Cookbook management options displayed for chef roles */}
             {!isFoodLover && !isAdmin && (
               <button
                 className={`nav-item ${activeTab === 'recipes' ? 'active' : ''}`}
                 onClick={() => setActiveTab('recipes')}
               >
-                <BookOpen size={20} /> My Recipes
+                <Icon name="book-open" size={20} /> My Recipes
               </button>
             )}
             <button
               className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
             >
-              <Settings size={20} /> Profile Settings
+              <Icon name="settings" size={20} /> Profile Settings
             </button>
             <button className="nav-item text-danger mt-auto" onClick={handleLogout}>
-              <LogOut size={20} /> Log Out
+              <Icon name="log-out" size={20} filter="#ef4444" /> Log Out
             </button>
           </nav>
         </aside>
 
-        {/* Dynamic viewport for rendered tab content */}
         <main className="dashboard-main">
           {renderContent()}
         </main>
       </div>
 
-      {/* Recipe creation and modification modal overlay */}
       {showModal && (
         <div className="modal-backdrop" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <button className="modal-close" onClick={() => setShowModal(false)} style={{ top: '10px', right: '10px', background: 'rgba(255,255,255,0.2)', color: 'white' }}>&times;</button>
-            <div className="modal-body" style={{ padding: '2.5rem' }}>
+            <button className="modal-close" onClick={() => setShowModal(false)}>&times;</button>
+            <div className="modal-body">
               <div className="recipe-modal-header">
-                <BookOpen size={32} color="white" />
+                <Icon name="book-open" size={32} filter="white" />
                 <h2>{isEditing ? 'Edit Your Masterpiece' : 'Create New Masterpiece'}</h2>
               </div>
 
@@ -418,7 +435,7 @@ const ChefDashboard = () => {
                     />
                   </div>
                 </div>
-                <button type="submit" className="btn-primary w-100 mt-4" style={{ padding: '1rem', fontSize: '1.1rem', borderRadius: '12px' }}>
+                <button type="submit" className="btn-primary w-100 mt-4">
                   {isEditing ? 'Save Changes' : 'Publish Recipe'}
                 </button>
               </form>

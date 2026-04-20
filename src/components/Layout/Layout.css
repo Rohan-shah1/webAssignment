@@ -13,6 +13,7 @@
   justify-content: space-between;
   align-items: center;
   height: 70px;
+  position: relative;
 }
 
 .navbar-brand {
@@ -29,6 +30,23 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.nav-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.nav-toggle:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--primary-color);
 }
 
 .nav-link {
@@ -71,7 +89,50 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
+  .nav-toggle {
+    display: inline-flex;
+  }
+
   .navbar-links {
-    gap: 1rem;
+    display: none;
+    position: absolute;
+    top: calc(70px + 12px);
+    right: 0;
+    width: min(92vw, 360px);
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 0.75rem;
+    box-shadow: var(--card-shadow-hover);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    z-index: 1001;
+  }
+
+  .navbar-links.open {
+    display: flex;
+  }
+
+  .nav-link {
+    padding: 0.8rem 0.9rem;
+    border-radius: 12px;
+  }
+
+  .nav-link:hover {
+    background: var(--bg-secondary);
+  }
+
+  .login-btn {
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
+    background: var(--bg-secondary);
+  }
+
+  .theme-toggle {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 12px;
+    padding: 0.8rem 0.9rem;
   }
 }

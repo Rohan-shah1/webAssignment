@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChefHat, Star } from 'lucide-react';
 import './Home.css';
 
 import API from '../../api';
@@ -52,7 +51,12 @@ const ChefList = ({ isDashboardMode = false }) => {
 
         {loading ? (
           <div className="loading-state">
-            <ChefHat className="spinner" size={48} color="var(--primary-color)" />
+            <img 
+              src="https://unpkg.com/lucide-static@latest/icons/chef-hat.svg" 
+              alt="Loading" 
+              className="spinner" 
+              style={{ width: 48, height: 48, filter: 'var(--primary-filter)' }} 
+            />
             <p>Loading chefs...</p>
           </div>
         ) : (
@@ -69,7 +73,14 @@ const ChefList = ({ isDashboardMode = false }) => {
                   <h3>{chef.name}</h3>
                   <p className="specialty">{chef.specialty}</p>
                   <div className="chef-stats">
-                    <span className="rating"><Star size={16} fill="#f59e0b" color="#f59e0b" /> {chef.rating}</span>
+                    <span className="rating">
+                      <img 
+                        src="https://unpkg.com/lucide-static@latest/icons/star.svg" 
+                        alt="Rating" 
+                        style={{ width: 16, height: 16, filter: 'invert(58%) sepia(93%) saturate(1352%) hue-rotate(359deg) brightness(102%) contrast(107%)' }} 
+                      /> 
+                      {chef.rating}
+                    </span>
                     <span className="recipes-count">{chef.recipesCount} Recipes</span>
                   </div>
                 </div>

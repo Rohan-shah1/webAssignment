@@ -3,6 +3,8 @@
 :root {
   --primary-color: #d97706; /* amber-600 */
   --primary-hover: #b45309; /* amber-700 */
+  --primary-filter: invert(58%) sepia(93%) saturate(1352%) hue-rotate(359deg) brightness(102%) contrast(107%);
+  --icon-filter: invert(0);
   --bg-color: #ffffff;
   --text-primary: #111827; /* gray-900 */
   --text-secondary: #4b5563; /* gray-600 */
@@ -23,6 +25,7 @@
   --bg-secondary: #1f2937;
   --border-color: #374151;
   --surface-color: #1f2937;
+  --icon-filter: invert(1);
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   --card-shadow-hover: 0 10px 20px -3px rgba(0, 0, 0, 0.6);
 }
@@ -33,6 +36,11 @@
   padding: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-color);
@@ -40,7 +48,12 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+  overflow-x: hidden;
 }
+
+h1 { font-size: clamp(2rem, 4vw, 3rem); }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.5rem); }
+h3 { font-size: clamp(1.25rem, 2.2vw, 1.6rem); }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Playfair Display', serif;
@@ -68,6 +81,12 @@ button {
   font-weight: 500;
   transition: all var(--transition-speed) ease;
 }
+
+input, select, textarea, button {
+  font: inherit;
+}
+
+.w-100 { width: 100%; }
 
 .btn-primary {
   background-color: var(--primary-color);
@@ -99,6 +118,34 @@ button {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+.text-secondary { color: var(--text-secondary); }
+.text-sm { font-size: 0.875rem; }
+
+.text-left { text-align: left; }
+
+.p-0 { padding: 0; }
+.p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; }
+
+.py-8 { padding-top: 2rem; padding-bottom: 4rem; }
+.py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+
+.mt-1 { margin-top: 0.25rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-8 { margin-top: 2rem; }
+.mr-1 { margin-right: 0.25rem; }
+.mr-3 { margin-right: 0.75rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.opacity-50 { opacity: 0.5; }
+.opacity-30 { opacity: 0.3; }
+
+@media (max-width: 600px) {
+  .container {
+    padding: 0 1rem;
+  }
 }
 
 .text-center { text-align: center; }

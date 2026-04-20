@@ -1,0 +1,118 @@
+:root {
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+.ds-card {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--card-shadow);
+}
+
+.ds-row {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ds-input,
+.ds-select,
+.ds-textarea {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.7rem 0.9rem;
+  transition: border-color var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+}
+
+.ds-input:focus,
+.ds-select:focus,
+.ds-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--surface-color);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+.ds-input-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  padding: 0 0.75rem;
+  min-height: 44px;
+}
+
+.ds-input-group .ds-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0.6rem 0;
+}
+
+.ds-input-group .ds-input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.ds-muted {
+  color: var(--text-secondary);
+}
+
+.ds-kicker {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.ds-link-card {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+}
+
+.ds-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.ds-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.ds-table th,
+.ds-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ds-table thead th {
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .ds-row {
+    gap: var(--space-3);
+  }
+}

@@ -71,7 +71,7 @@
   gap: 0.8rem;
   color: var(--text-secondary);
   font-size: 0.95rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0;
   text-align: left;
 }
 
@@ -81,27 +81,29 @@
   gap: 0.8rem;
 }
 
-.profile-socials {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.profile-socials a {
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  padding: 0.6rem;
-  border-radius: 50%;
-  display: flex;
-  transition: all var(--transition-speed);
-}
-
-.profile-socials a:hover {
-  color: white;
+.btn-follow {
+  width: 100%;
+  margin-top: 1.5rem;
   background: var(--primary-color);
-  transform: translateY(-3px);
+  color: #fff;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+}
+
+.btn-follow:hover {
+  background: var(--primary-hover);
+}
+
+.btn-follow.following {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-follow:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .w-100 {
@@ -329,5 +331,25 @@
 
   .profile-content {
     padding-top: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-hero {
+    height: 220px;
+  }
+
+  .profile-sidebar {
+    padding: 1.5rem;
+  }
+
+  .profile-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .recipe-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
 }

@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use same-origin in dev (Vite proxy) and allow override for deploys.
+const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const fetchWithAuth = async (endpoint, options = {}) => {
   // Retrieval of user credentials from local storage
@@ -55,12 +56,55 @@ export const updateProfile = (userData) =>
     body: userData // This can be FormData or JSON
   });
 
+export const resendOtp = (email) => 
+  fetchWithAuth('/auth/resend-otp', { 
+    method: 'POST', 
+    body: JSON.stringify({ email }) 
+  });
+
+export const verifyEmailOtp = (email, otp, role) => 
+  fetchWithAuth('/auth/verify-otp', { 
+    method: 'POST', 
+    body: JSON.stringify({ email, otp, role }) 
+  });
+
+export const forgotPassword = (email) => 
+  fetchWithAuth('/auth/forgot-password', { 
+    method: 'POST', 
+    body: JSON.stringify({ email }) 
+  });
+
+export const verifyResetOtp = (email, otp) => 
+  fetchWithAuth('/auth/verify-reset-otp', { 
+    method: 'POST', 
+    body: JSON.stringify({ email, otp }) 
+  });
+
+export const resetPassword = (email, otp, newPassword) => 
+  fetchWithAuth('/auth/reset-password', { 
+    method: 'POST', 
+    body: JSON.stringify({ email, otp, newPassword }) 
+  });
+
+export const googleAuth = (token) => 
+  fetchWithAuth('/auth/google', { 
+    method: 'POST', 
+    body: JSON.stringify({ idToken: token }) 
+  });
+
+export const verifyGoogleOtp = (email, otp, role) => 
+  fetchWithAuth('/auth/google/verify-otp', { 
+    method: 'POST', 
+    body: JSON.stringify({ email, otp, role }) 
+  });
+
 // User/Chef APIs
 export const getChefs = () => fetchWithAuth('/users/chefs');
 export const getChefDetails = (id) => fetchWithAuth(`/users/chefs/${id}`);
+export const getFollowedChefs = () => fetchWithAuth('/users/followed-chefs');
+export const toggleFollowChef = (id) => fetchWithAuth(`/users/followed-chefs/${id}`, { method: 'PUT' });
 
 // --- Recipe APIs --- //
-// Execution of recipe data retrieval with optional query parameters
 export const fetchRecipes = (query = '') => fetchWithAuth(`/recipes${query}`);
 export const fetchRecipeById = (id) => fetchWithAuth(`/recipes/${id}`);
 export const createRecipe = (recipeData) => 
@@ -87,6 +131,22 @@ export const addComment = (id, text) =>
     body: JSON.stringify({ text }) 
   });
 
+export const reactToComment = (id, commentId, emoji) => 
+  fetchWithAuth(`/recipes/${id}/comment/${commentId}/react`, { 
+    method: 'PUT', 
+    body: JSON.stringify({ emoji }) 
+  });
+
+export const replyToComment = (id, commentId, text) => 
+  fetchWithAuth(`/recipes/${id}/comment/${commentId}/reply`, { 
+    method: 'POST', 
+    body: JSON.stringify({ text }) 
+  });
+
+export const getSavedRecipes = () => fetchWithAuth('/users/saved-recipes');
+export const toggleSavedRecipe = (id) => 
+  fetchWithAuth(`/users/saved-recipes/${id}`, { method: 'PUT' });
+
 // Admin APIs
 export const adminGetUsers = () => fetchWithAuth('/admin/users');
 export const adminDeleteUser = (id) => fetchWithAuth(`/admin/users/${id}`, { method: 'DELETE' });
@@ -97,6 +157,13 @@ export const adminUpdateProfile = (userData) =>
     body: userData 
   });
 
+// Ingredients (optional AI normalization)
+export const normalizeIngredients = (ingredients, baseQty = 1, desiredQty = 1) =>
+  fetchWithAuth('/ingredients/normalize', {
+    method: 'POST',
+    body: JSON.stringify({ ingredients, baseQty, desiredQty }),
+  });
+
 const API = {
   login,
   register,
@@ -104,6 +171,8 @@ const API = {
   updateProfile,
   getChefs,
   getChefDetails,
+  getFollowedChefs,
+  toggleFollowChef,
   fetchRecipes,
   fetchRecipeById,
   createRecipe,
@@ -111,10 +180,22 @@ const API = {
   deleteRecipe,
   likeRecipe,
   addComment,
+  reactToComment,
+  replyToComment,
+  getSavedRecipes,
+  toggleSavedRecipe,
+  resendOtp,
+  verifyEmailOtp,
+  forgotPassword,
+  verifyResetOtp,
+  resetPassword,
+  googleAuth,
+  verifyGoogleOtp,
   adminGetUsers,
   adminDeleteUser,
   adminGetRecipes,
   adminUpdateProfile,
+  normalizeIngredients,
 };
 
 export default API;

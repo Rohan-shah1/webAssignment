@@ -223,6 +223,39 @@
     align-items: flex-start;
     gap: 1rem;
   }
+
+  .dashboard-panel {
+    padding: 1.5rem;
+    min-height: auto;
+  }
+
+  .dashboard-recipe-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .recipe-meta {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-sidebar {
+    border-radius: 14px;
+  }
+
+  .sidebar-header {
+    padding: 1.25rem;
+  }
+
+  .nav-item {
+    padding: 0.85rem 1rem;
+  }
+
+  .dashboard-panel {
+    padding: 1.25rem;
+  }
 }
 
 /* Modern Recipe Modal UX */
@@ -243,6 +276,16 @@
   font-size: 1.8rem;
   font-weight: 700;
   letter-spacing: -0.5px;
+}
+
+.dashboard-panel.clean-panel {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.profile-help-text {
+  font-size: 0.8rem;
 }
 
 .recipe-form-group {

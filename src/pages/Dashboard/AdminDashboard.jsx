@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Users, BookOpen, Trash2, ShieldCheck, Settings, LogOut } from 'lucide-react';
 import { toast } from 'react-toastify';
 import API from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import './Dashboard.css'; // Reuse dashboard styles
+
+const Icon = ({ name, size = 20, filter = 'var(--icon-filter)', className = "" }) => (
+  <img 
+    src={`https://unpkg.com/lucide-static@latest/icons/${name}.svg`} 
+    alt={name} 
+    style={{ width: size, height: size, filter }} 
+    className={className}
+  />
+);
 
 const AdminDashboard = () => {
   const { userInfo, login, logout } = useAuth();
@@ -67,11 +75,9 @@ const AdminDashboard = () => {
       }
       
       const updated = await API.adminUpdateProfile(formData);
-      console.log('Profile update response:', updated);
       login(updated);
       toast.success('Profile updated successfully!');
     } catch (error) {
-      console.error('Admin Profile Update Error:', error);
       toast.error(error.message || 'Failed to update profile');
     }
   };
@@ -98,7 +104,9 @@ const AdminDashboard = () => {
     <div className="dashboard-page container py-8">
       <div className="header-flex mb-8">
         <div>
-          <h1 className="flex-align"><ShieldCheck className="mr-2" color="var(--primary-color)" /> Admin Control Center</h1>
+          <h1 className="flex-align">
+            <Icon name="shield-check" size={32} filter="var(--primary-filter)" className="mr-3" /> Admin Control Center
+          </h1>
           <p className="text-secondary">Manage platform users and content</p>
         </div>
       </div>
@@ -110,22 +118,22 @@ const AdminDashboard = () => {
               className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
               onClick={() => setActiveTab('users')}
             >
-              <Users size={20} /> User Management
+              <Icon name="users" size={20} /> User Management
             </button>
             <button 
               className={`nav-item ${activeTab === 'recipes' ? 'active' : ''}`}
               onClick={() => setActiveTab('recipes')}
             >
-              <BookOpen size={20} /> Global Recipes
+              <Icon name="book-open" size={20} /> Global Recipes
             </button>
             <button 
               className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
               onClick={() => setActiveTab('profile')}
             >
-              <Settings size={20} /> Profile Settings
+              <Icon name="settings" size={20} /> Profile Settings
             </button>
             <button className="nav-item text-danger mt-auto" onClick={handleLogout}>
-              <LogOut size={20} /> Log Out
+              <Icon name="log-out" size={20} filter="#ef4444" /> Log Out
             </button>
           </nav>
         </aside>
@@ -135,10 +143,10 @@ const AdminDashboard = () => {
             <div className="dashboard-panel">
               <h2>All Users ({users.length})</h2>
               <div className="header-line-sm mb-4"></div>
-              <div className="table-container" style={{ overflowX: 'auto' }}>
-                <table className="w-100 text-left" style={{ borderCollapse: 'collapse' }}>
+              <div className="table-container ds-table-wrap">
+                <table className="ds-table text-left">
                   <thead>
-                    <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                    <tr>
                       <th className="p-3">Username</th>
                       <th className="p-3">Email</th>
                       <th className="p-3">Role</th>
@@ -147,12 +155,14 @@ const AdminDashboard = () => {
                   </thead>
                   <tbody>
                     {users.map(u => (
-                      <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <tr key={u._id}>
                         <td className="p-3 font-bold">{u.username}</td>
                         <td className="p-3">{u.email}</td>
                         <td className="p-3"><span className="badge">{u.role}</span></td>
                         <td className="p-3">
-                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)}><Trash2 size={18} /></button>
+                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)}>
+                            <Icon name="trash-2" size={18} filter="#ef4444" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -172,7 +182,9 @@ const AdminDashboard = () => {
                       <p className="text-sm text-secondary">By {recipe.user?.username || 'Unknown'}</p>
                     </div>
                     <div className="recipe-actions">
-                      <button className="btn-icon text-danger" onClick={() => deleteRecipe(recipe._id)}><Trash2 size={18} /></button>
+                      <button className="btn-icon text-danger" onClick={() => deleteRecipe(recipe._id)}>
+                        <Icon name="trash-2" size={18} filter="#ef4444" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -206,7 +218,7 @@ const AdminDashboard = () => {
                     accept="image/*"
                     onChange={e => setProfileImage(e.target.files[0])}
                   />
-                  <p className="text-secondary mt-1" style={{ fontSize: '0.8rem' }}>
+                  <p className="text-secondary mt-1 profile-help-text">
                     Leave empty to keep current picture.
                   </p>
                 </div>

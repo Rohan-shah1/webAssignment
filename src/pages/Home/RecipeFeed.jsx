@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Filter, BookOpen } from 'lucide-react';
 import API from '../../api';
 
 const RecipeFeed = () => {
@@ -40,23 +39,27 @@ const RecipeFeed = () => {
         <div className="header-line"></div>
       </div>
 
-      <div className="search-filter-bar mb-8 p-4 bg-light rounded" style={{ backgroundColor: 'var(--surface-color)', boxShadow: 'var(--card-shadow)' }}>
-        <form onSubmit={fetchRecipes} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <div style={{ flex: '1 1 300px', display: 'flex', alignItems: 'center', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 0.5rem' }}>
-            <Search size={20} className="text-secondary" />
+      <div className="search-filter-bar mb-8 p-4 ds-card">
+        <form onSubmit={fetchRecipes} className="ds-row">
+          <div className="ds-input-group" style={{ flex: '1 1 320px' }}>
+            <img 
+              src="https://unpkg.com/lucide-static@latest/icons/search.svg" 
+              alt="Search" 
+              style={{ width: 20, height: 20, filter: 'var(--icon-filter)' }} 
+            />
             <input 
               type="text" 
+              className="ds-input"
               placeholder="Search by title or ingredients..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ border: 'none', background: 'transparent', width: '100%', padding: '0.5rem', outline: 'none', color: 'var(--text-primary)' }}
             />
           </div>
           
           <select 
+            className="ds-select"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)' }}
           >
             <option value="">All Categories</option>
             <option value="Breakfast">Breakfast</option>
@@ -67,9 +70,9 @@ const RecipeFeed = () => {
           </select>
 
           <select 
+            className="ds-select"
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
-            style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-primary)' }}
           >
             <option value="">All Difficulties</option>
             <option value="Easy">Easy</option>
@@ -78,7 +81,11 @@ const RecipeFeed = () => {
           </select>
 
           <button type="submit" className="btn-primary flex-align">
-            <Filter size={18} className="mr-2" /> Apply
+            <img 
+              src="https://unpkg.com/lucide-static@latest/icons/filter.svg" 
+              alt="Filter" 
+              style={{ width: 18, height: 18, filter: 'invert(1)', marginRight: '8px' }} 
+            /> Apply
           </button>
         </form>
       </div>
@@ -89,13 +96,22 @@ const RecipeFeed = () => {
         </div>
       ) : recipes.length === 0 ? (
         <div className="text-center py-8">
-          <BookOpen size={48} className="mx-auto mb-4 text-secondary opacity-50" />
+          <img 
+            src="https://unpkg.com/lucide-static@latest/icons/book-open.svg" 
+            alt="No Recipes" 
+            style={{ width: 48, height: 48, margin: '0 auto 1rem', filter: 'var(--icon-filter)' }} 
+            className="opacity-50"
+          />
           <p className="text-secondary">No recipes found matching your criteria.</p>
         </div>
       ) : (
         <div className="recipe-grid">
           {recipes.map(recipe => (
-            <div key={recipe._id} className="recipe-card">
+            <Link 
+              to={`/recipe/${recipe._id}`} 
+              key={recipe._id} 
+              className="recipe-card ds-link-card"
+            >
               <div className="recipe-img-container">
                 <img src={recipe.image || 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'} alt={recipe.title} />
                 <span className="recipe-difficulty">{recipe.difficulty || 'Medium'}</span>
@@ -105,11 +121,10 @@ const RecipeFeed = () => {
                 <p className="text-secondary text-sm mb-2">By {recipe.chef?.username || 'Unknown Chef'}</p>
                 <div className="recipe-footer mt-4">
                   <span className="recipe-time">🕒 {recipe.prepTime ? `${recipe.prepTime} min` : 'N/A'}</span>
-                  {/* Reuse the ChefProfile logic to Read More, or just link to the Chef Profile */}
-                  <Link to={`/chef/${recipe.chef?._id}`} className="btn-outline btn-sm">View Chef</Link>
+                  <span className="btn-outline btn-sm">View Recipe</span>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}
