@@ -2,6 +2,24 @@ const Recipe = require('../models/Recipe');
 const cloudinary = require('../config/cloudinary');
 const { Readable } = require('stream');
 
+const normalizeIngredients = (ingredients) => {
+  if (Array.isArray(ingredients)) {
+    return ingredients
+      .flatMap((v) => (typeof v === 'string' ? v.split(',') : []))
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof ingredients === 'string') {
+    return ingredients
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
+
 // GET /api/recipes - Fetch all recipes with optional filters (search, category, difficulty)
 const getRecipes = async (req, res) => {
   try {
@@ -48,7 +66,7 @@ const getRecipeById = async (req, res) => {
 // POST /api/recipes - Create a new recipe (Requires Chef or Admin role)
 const createRecipe = async (req, res) => {
   try {
-    const { title, ingredients, instructions, image, category, difficulty, prepTime } = req.body;
+    const { title, ingredients, instructions, image, category, difficulty, prepTime, baseQty, baseUnit } = req.body;
 
     let imageUrl = image;
 
@@ -74,12 +92,14 @@ const createRecipe = async (req, res) => {
 
     const recipe = new Recipe({
       title,
-      ingredients,
+      ingredients: normalizeIngredients(ingredients),
       instructions,
       image: imageUrl,
       category,
       difficulty,
       prepTime,
+      baseQty: baseQty ? Number(baseQty) : 1,
+      baseUnit: baseUnit || 'kg',
       chef: req.user._id,
     });
 
@@ -93,7 +113,7 @@ const createRecipe = async (req, res) => {
 // PUT /api/recipes/:id - Update an existing recipe (Requires Chef Owner or Admin)
 const updateRecipe = async (req, res) => {
   try {
-    const { title, ingredients, instructions, image, category, difficulty, prepTime } = req.body;
+    const { title, ingredients, instructions, image, category, difficulty, prepTime, baseQty, baseUnit } = req.body;
 
     const recipe = await Recipe.findById(req.params.id);
 
@@ -125,12 +145,17 @@ const updateRecipe = async (req, res) => {
       }
 
       recipe.title = title || recipe.title;
-      recipe.ingredients = ingredients || recipe.ingredients;
+      if (ingredients !== undefined) {
+        const normalized = normalizeIngredients(ingredients);
+        recipe.ingredients = normalized.length ? normalized : recipe.ingredients;
+      }
       recipe.instructions = instructions || recipe.instructions;
       recipe.image = imageUrl;
       recipe.category = category || recipe.category;
       recipe.difficulty = difficulty || recipe.difficulty;
       recipe.prepTime = prepTime !== undefined ? prepTime : recipe.prepTime;
+      recipe.baseQty = baseQty !== undefined ? Number(baseQty) : recipe.baseQty;
+      recipe.baseUnit = baseUnit !== undefined ? baseUnit : recipe.baseUnit;
 
       const updatedRecipe = await recipe.save();
       res.json(updatedRecipe);
@@ -196,7 +221,10 @@ const addComment = async (req, res) => {
       const comment = {
         user: req.user._id,
         username: req.user.username,
+        profilePicture: req.user.profilePicture || '',
         text,
+        reactions: [],
+        replies: [],
       };
 
       recipe.comments.push(comment);
@@ -210,6 +238,75 @@ const addComment = async (req, res) => {
   }
 };
 
+// PUT /api/recipes/:id/comment/:commentId/react - Toggle emoji reaction on a comment
+const reactToComment = async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    const ALLOWED = ['❤️', '😂', '😮', '😢', '👏', '🔥'];
+    if (!ALLOWED.includes(emoji)) return res.status(400).json({ message: 'Invalid emoji' });
+
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    const comment = recipe.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    const userId = req.user._id.toString();
+    const existing = comment.reactions.find(r => r.user.toString() === userId);
+
+    if (existing) {
+      if (existing.emoji === emoji) {
+        // Same emoji — remove reaction (toggle off)
+        comment.reactions = comment.reactions.filter(r => r.user.toString() !== userId);
+      } else {
+        // Different emoji — switch reaction
+        existing.emoji = emoji;
+      }
+    } else {
+      comment.reactions.push({ user: req.user._id, emoji });
+    }
+
+    await recipe.save();
+    res.json(recipe.comments);
+  } catch (error) {
+    console.error('ReactToComment Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// POST /api/recipes/:id/comment/:commentId/reply - Chef replies to a comment
+const replyToComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const recipe = await Recipe.findById(req.params.id);
+    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+
+    // Only the chef who owns the recipe (or Admin) can reply
+    if (
+      recipe.chef.toString() !== req.user._id.toString() &&
+      req.user.role !== 'Admin'
+    ) {
+      return res.status(403).json({ message: 'Only the chef can reply to comments' });
+    }
+
+    const comment = recipe.comments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    comment.replies.push({
+      user: req.user._id,
+      username: req.user.username,
+      profilePicture: req.user.profilePicture || '',
+      text,
+    });
+
+    await recipe.save();
+    res.status(201).json(recipe.comments);
+  } catch (error) {
+    console.error('ReplyToComment Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
 module.exports = {
   getRecipes,
   getRecipeById,
@@ -218,4 +315,6 @@ module.exports = {
   deleteRecipe,
   likeRecipe,
   addComment,
+  reactToComment,
+  replyToComment,
 };

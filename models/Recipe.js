@@ -36,6 +36,14 @@ const recipeSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  baseQty: {
+    type: Number,
+    default: 1,
+  },
+  baseUnit: {
+    type: String,
+    default: 'kg',
+  },
   likes: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
@@ -47,10 +55,22 @@ const recipeSchema = new mongoose.Schema({
       required: true
     },
     username: String,
+    profilePicture: { type: String, default: '' },
     text: {
       type: String,
       required: true
     },
+    reactions: [{
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      emoji: { type: String, enum: ['❤️', '😂', '😮', '😢', '👏', '🔥'] }
+    }],
+    replies: [{
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      username: String,
+      profilePicture: { type: String, default: '' },
+      text: String,
+      createdAt: { type: Date, default: Date.now }
+    }],
     createdAt: {
       type: Date,
       default: Date.now

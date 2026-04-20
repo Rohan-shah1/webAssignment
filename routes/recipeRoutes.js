@@ -7,7 +7,9 @@ const {
   updateRecipe,
   deleteRecipe,
   likeRecipe,
-  addComment
+  addComment,
+  reactToComment,
+  replyToComment,
 } = require('../controllers/recipeController');
 const { protect, chefOnly } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -23,5 +25,7 @@ router.route('/:id')
 
 router.put('/:id/like', protect, likeRecipe);
 router.post('/:id/comment', protect, addComment);
+router.put('/:id/comment/:commentId/react', protect, reactToComment);
+router.post('/:id/comment/:commentId/reply', protect, replyToComment);
 
 module.exports = router;
