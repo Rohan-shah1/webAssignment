@@ -59,7 +59,7 @@ const verifyEmailOtp = async (req, res) => {
     const pendingData = await PendingRegistration.findOne({ email, type: 'regular_signup' });
     
     if (!pendingData) return res.status(400).json({ message: 'No pending registration found for this email' });
-    if (new Date() > pendingData.otpExpiry) return res.status(400).json({ message: 'OTP has expired' });
+    if (Date.now() > pendingData.otpExpiry.getTime()) return res.status(400).json({ message: 'OTP has expired' });
     if (pendingData.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
 
     // OTP matches, create the user
@@ -76,8 +76,15 @@ const verifyEmailOtp = async (req, res) => {
 
     if (user) {
       res.status(201).json({
-        _id: user._id, username: user.username, email: user.email,
-        role: user.role, token: generateToken(user._id),
+        _id: user._id, 
+        username: user.username, 
+        email: user.email,
+        role: user.role, 
+        bio: user.bio,
+        address: user.address,
+        profilePicture: user.profilePicture,
+        isGoogleUser: user.isGoogleUser,
+        token: generateToken(user._id),
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -228,7 +235,7 @@ const verifyGoogleOtp = async (req, res) => {
     });
 
     if (!pendingData) return res.status(400).json({ message: 'No OTP request found' });
-    if (new Date() > pendingData.otpExpiry) return res.status(400).json({ message: 'OTP has expired' });
+    if (Date.now() > pendingData.otpExpiry.getTime()) return res.status(400).json({ message: 'OTP has expired' });
     if (pendingData.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
 
     const allowedRoles = ['Chef', 'Food Lover'];
@@ -259,9 +266,15 @@ const verifyGoogleOtp = async (req, res) => {
     await PendingRegistration.deleteOne({ _id: pendingData._id });
 
     res.json({
-      _id: user._id, username: user.username, email: user.email,
-      role: user.role, bio: user.bio, address: user.address, profilePicture: user.profilePicture,
-      isGoogleUser: true, token: generateToken(user._id),
+      _id: user._id, 
+      username: user.username, 
+      email: user.email,
+      role: user.role, 
+      bio: user.bio, 
+      address: user.address, 
+      profilePicture: user.profilePicture,
+      isGoogleUser: true, 
+      token: generateToken(user._id),
     });
   } catch (error) {
     console.error('Verify Google OTP Error:', error);
@@ -327,10 +340,18 @@ const updateUserProfile = async (req, res) => {
     }
 
     const updatedUser = await user.save();
+    
+    // Return full profile so frontend state stays in sync
     res.json({
-      _id: updatedUser._id, username: updatedUser.username, email: updatedUser.email,
-      role: updatedUser.role, bio: updatedUser.bio, address: updatedUser.address, profilePicture: updatedUser.profilePicture,
-      isGoogleUser: updatedUser.isGoogleUser, token: generateToken(updatedUser._id),
+      _id: updatedUser._id, 
+      username: updatedUser.username, 
+      email: updatedUser.email,
+      role: updatedUser.role, 
+      bio: updatedUser.bio, 
+      address: updatedUser.address, 
+      profilePicture: updatedUser.profilePicture,
+      isGoogleUser: updatedUser.isGoogleUser, 
+      token: generateToken(updatedUser._id),
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error updating profile', error: error.message });
@@ -370,8 +391,8 @@ const verifyResetOtp = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user || !user.resetPasswordOtp) return res.status(400).json({ message: 'No password reset request found' });
-    if (new Date() > user.resetPasswordOtpExpiry) return res.status(400).json({ message: 'OTP has expired' });
     if (user.resetPasswordOtp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    if (Date.now() > user.resetPasswordOtpExpiry.getTime()) return res.status(400).json({ message: 'OTP has expired' });
 
     res.json({ verified: true, email });
   } catch (error) {
@@ -401,8 +422,30 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// @desc    Change password
+// @route   PUT /api/auth/change-password
+// @access  Private
+const changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.isGoogleUser) return res.status(400).json({ message: 'Google users cannot change password' });
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) return res.status(401).json({ message: 'Incorrect current password' });
+
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error changing password' });
+  }
+};
+
 module.exports = {
   registerUser, verifyEmailOtp, resendOtp, loginUser, getUserProfile, updateUserProfile,
   googleAuth, verifyGoogleOtp,
   forgotPassword, verifyResetOtp, resetPassword,
+  changePassword
 };

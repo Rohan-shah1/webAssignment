@@ -177,8 +177,14 @@ const deleteRecipe = async (req, res) => {
         return res.status(403).json({ message: 'Not authorized to delete this recipe' });
       }
 
+      const { reason } = req.body;
+      if (req.user.role === 'Admin' && reason) {
+        console.log(`[ADMIN ACTION] Recipe "${recipe.title}" deleted by Admin ${req.user.username}. Reason: ${reason}`);
+        // Here you could also send an email to the chef or save to a log model
+      }
+
       await recipe.deleteOne();
-      res.json({ message: 'Recipe removed' });
+      res.json({ message: 'Recipe removed successfully' });
     } else {
       res.status(404).json({ message: 'Recipe not found' });
     }
@@ -229,7 +235,15 @@ const addComment = async (req, res) => {
 
       recipe.comments.push(comment);
       await recipe.save();
-      res.status(201).json(recipe.comments);
+
+      // Return the updated recipe for full state sync
+      const updatedRecipe = await Recipe.findById(req.params.id).populate('chef', 'username profilePicture bio');
+      
+      // Emit real-time update to everyone in this recipe room
+      const io = req.app.get('io');
+      io.to(req.params.id).emit('recipe_updated', updatedRecipe);
+
+      res.status(201).json(updatedRecipe);
     } else {
       res.status(404).json({ message: 'Recipe not found' });
     }
@@ -267,7 +281,13 @@ const reactToComment = async (req, res) => {
     }
 
     await recipe.save();
-    res.json(recipe.comments);
+    const updatedRecipe = await Recipe.findById(req.params.id).populate('chef', 'username profilePicture bio');
+
+    // Real-time sync for reactions
+    const io = req.app.get('io');
+    io.to(req.params.id).emit('recipe_updated', updatedRecipe);
+
+    res.json(updatedRecipe);
   } catch (error) {
     console.error('ReactToComment Error:', error);
     res.status(500).json({ message: 'Server Error' });
@@ -300,7 +320,13 @@ const replyToComment = async (req, res) => {
     });
 
     await recipe.save();
-    res.status(201).json(recipe.comments);
+    const updatedRecipe = await Recipe.findById(req.params.id).populate('chef', 'username profilePicture bio');
+
+    // Real-time sync for chef replies
+    const io = req.app.get('io');
+    io.to(req.params.id).emit('recipe_updated', updatedRecipe);
+
+    res.status(201).json(updatedRecipe);
   } catch (error) {
     console.error('ReplyToComment Error:', error);
     res.status(500).json({ message: 'Server Error' });

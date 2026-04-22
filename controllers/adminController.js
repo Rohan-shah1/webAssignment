@@ -5,21 +5,29 @@ const Recipe = require('../models/Recipe');
 // @route   GET /api/admin/users
 // @access  Private/Admin
 const getAllUsers = async (req, res) => {
-  const users = await User.find({ role: { $ne: 'Admin' } }).select('-password');
-  res.json(users);
+  try {
+    const users = await User.find({ role: { $ne: 'Admin' } }).select('-password');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Delete user
 // @route   DELETE /api/admin/users/:id
 // @access  Private/Admin
 const deleteUser = async (req, res) => {
-  const user = await User.findById(req.params.id);
+  try {
+    const user = await User.findById(req.params.id);
 
-  if (user) {
-    await user.remove();
-    res.json({ message: 'User removed' });
-  } else {
-    res.status(404).json({ message: 'User not found' });
+    if (user) {
+      await User.deleteOne({ _id: req.params.id });
+      res.json({ message: 'User removed' });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -27,8 +35,12 @@ const deleteUser = async (req, res) => {
 // @route   GET /api/admin/recipes
 // @access  Private/Admin
 const getAllRecipes = async (req, res) => {
-  const recipes = await Recipe.find({}).populate('user', 'username email');
-  res.json(recipes);
+  try {
+    const recipes = await Recipe.find({}).populate('chef', 'username email');
+    res.json(recipes);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {

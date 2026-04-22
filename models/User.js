@@ -18,7 +18,6 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    // 'Admin' is reserved — assigned directly in MongoDB Atlas, never via the public API
     enum: ['Food Lover', 'Chef', 'Admin'],
     default: 'Food Lover',
   },

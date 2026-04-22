@@ -10,6 +10,16 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = require('http').createServer(app);
+const io = require('socket.io')(httpServer, {
+  cors: {
+    origin: "*", // Adjust this for production to match your frontend URL
+    methods: ["GET", "POST"]
+  }
+});
+
+// Attach io to app so it's accessible in controllers
+app.set('io', io);
 
 // --- Middleware Setup --- //
 // Parse incoming JSON request bodies
@@ -31,6 +41,19 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+io.on('connection', (socket) => {
+  console.log('User connected to socket:', socket.id);
+  
+  socket.on('join_recipe', (recipeId) => {
+    socket.join(recipeId);
+    console.log(`User ${socket.id} joined room: ${recipeId}`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
 });
