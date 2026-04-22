@@ -98,6 +98,12 @@ export const verifyGoogleOtp = (email, otp, role) =>
     body: JSON.stringify({ email, otp, role }) 
   });
 
+export const changePassword = (currentPassword, newPassword) => 
+  fetchWithAuth('/auth/change-password', { 
+    method: 'PUT', 
+    body: JSON.stringify({ currentPassword, newPassword }) 
+  });
+
 // User/Chef APIs
 export const getChefs = () => fetchWithAuth('/users/chefs');
 export const getChefDetails = (id) => fetchWithAuth(`/users/chefs/${id}`);
@@ -119,8 +125,11 @@ export const updateRecipe = (id, recipeData) =>
     body: recipeData instanceof FormData ? recipeData : JSON.stringify(recipeData) 
   });
 
-export const deleteRecipe = (id) => 
-  fetchWithAuth(`/recipes/${id}`, { method: 'DELETE' });
+export const deleteRecipe = (id, data) => 
+  fetchWithAuth(`/recipes/${id}`, { 
+    method: 'DELETE',
+    body: data ? JSON.stringify(data) : undefined
+  });
 
 export const likeRecipe = (id) => 
   fetchWithAuth(`/recipes/${id}/like`, { method: 'PUT' });
@@ -191,6 +200,7 @@ const API = {
   resetPassword,
   googleAuth,
   verifyGoogleOtp,
+  changePassword,
   adminGetUsers,
   adminDeleteUser,
   adminGetRecipes,

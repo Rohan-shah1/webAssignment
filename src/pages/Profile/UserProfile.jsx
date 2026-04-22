@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import API from '../../api';
 import { useAuth } from '../../context/AuthContext';
@@ -23,8 +24,6 @@ const UserProfile = () => {
     address: userInfo?.address || '',
     profilePicture: null // File object
   });
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -43,8 +42,6 @@ const UserProfile = () => {
       const updatedUser = await API.updateProfile(data);
       login(updatedUser);
       toast.success('Profile updated successfully!');
-      setCurrentPassword('');
-      setNewPassword('');
     } catch (err) {
       toast.error(err.message || 'Update failed');
     } finally {
@@ -115,49 +112,36 @@ const UserProfile = () => {
                   type="text" 
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="e.g. Paris, France"
+                  placeholder="e.g. Kathmandu, Nepal"
                 />
               </div>
             </div>
 
-            <div className="form-group mt-4">
-              <label>Bio</label>
-              <textarea 
-                rows="4"
-                value={formData.bio}
-                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                placeholder="Tell us about your culinary journey..."
-              ></textarea>
-            </div>
+            {userInfo?.role !== 'Admin' && (
+              <div className="form-group mt-4">
+                <label>Bio</label>
+                <textarea 
+                  className="modern-input"
+                  rows="4"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  placeholder="Tell us about your culinary journey..."
+                ></textarea>
+              </div>
+            )}
 
-            <div className="password-section mt-8">
-              <h3>Change Password</h3>
-              <p className="text-secondary text-sm mb-4">Leave blank if you don't want to change it.</p>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Current Password</label>
-                  <div className="input-group">
-                    <Icon name="lock" size={18} className="input-icon" />
-                    <input 
-                      type="password" 
-                      placeholder="••••••••"
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                    />
+            <div className="password-section mt-10">
+              <div className="security-card-content">
+                <div className="security-info">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon name="shield" size={20} className="text-primary" />
+                    <h3 className="text-lg font-bold">Account Security</h3>
                   </div>
+                  <p className="text-secondary text-sm">Protect your account by keeping your password up to date.</p>
                 </div>
-                <div className="form-group">
-                  <label>New Password</label>
-                  <div className="input-group">
-                    <Icon name="lock" size={18} className="input-icon" />
-                    <input 
-                      type="password" 
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                  </div>
-                </div>
+                <Link to="/change-password" title="Change Password" className="btn-security">
+                  <Icon name="lock" size={18} filter="white" /> Change Password
+                </Link>
               </div>
             </div>
 

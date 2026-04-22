@@ -116,3 +116,106 @@
     gap: var(--space-3);
   }
 }
+
+/* Common UI Components used across pages */
+.card-box {
+  background: var(--surface-color);
+  padding: var(--space-6);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+}
+
+.modern-input {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: all var(--transition-speed) ease;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
+/* Loading & Empty States */
+.ds-spinner {
+  animation: rotate 1s linear infinite;
+  filter: var(--primary-filter);
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ds-empty-state {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  color: var(--text-secondary);
+}
+
+.ds-empty-state img {
+  opacity: 0.4;
+  margin-bottom: var(--space-4);
+}
+
+.btn-pill {
+  padding: 0.6rem 1.5rem;
+  border-radius: 99px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.btn-pill.primary {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+}
+
+.btn-pill.outline {
+  background: transparent;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.btn-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Consistent Back Button for internal navigation */
+.ds-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.6rem 1.2rem;
+  border-radius: 99px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  margin-bottom: var(--space-6);
+}
+
+.ds-back-btn:hover {
+  background: var(--surface-color);
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateX(-4px);
+  box-shadow: var(--card-shadow);
+}

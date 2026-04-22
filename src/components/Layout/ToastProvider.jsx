@@ -1,12 +1,12 @@
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const ToastProvider = () => {
-  // Use a custom wrapper to pass the theme dynamically if needed
+const ToastProvider = ({ theme }) => {
   return (
     <ToastContainer 
       position="top-right" 
       autoClose={3000} 
+      theme={theme}
       hideProgressBar={false} 
       newestOnTop={false} 
       closeOnClick 
@@ -14,7 +14,6 @@ const ToastProvider = () => {
       pauseOnFocusLoss 
       draggable 
       pauseOnHover 
-      theme="colored" 
     />
   );
 };

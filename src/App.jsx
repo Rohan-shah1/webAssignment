@@ -12,6 +12,7 @@ import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import RecipeDetails from './pages/RecipeDetails/RecipeDetails';
 import SavedRecipes from './pages/SavedRecipes/SavedRecipes';
 import UserProfile from './pages/Profile/UserProfile';
+import ChangePassword from './pages/Profile/ChangePassword';
 import EmailOtpVerify from './pages/Auth/EmailOtpVerify';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import GoogleOtpVerify from './pages/Auth/GoogleOtpVerify';
@@ -34,7 +35,7 @@ function AppContent() {
   return (
     <Router>
       <Navbar theme={theme} toggleTheme={toggleTheme} />
-      <ToastProvider />
+      <ToastProvider theme={theme} />
       <main style={{ minHeight: 'calc(100vh - 140px)' }}>
         <Routes>
           <Route path="/" element={<ChefList />} />
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="/chef/:id" element={<ChefProfile />} />
           <Route path="/saved-recipes" element={userInfo ? <SavedRecipes /> : <Login />} />
           <Route path="/profile" element={userInfo ? <UserProfile /> : <Login />} />
+          <Route path="/change-password" element={userInfo ? <ChangePassword /> : <Login />} />
           <Route path="/dashboard" element={userInfo ? <ChefDashboard /> : <Login />} />
           <Route path="/admin" element={userInfo?.role === 'Admin' ? <AdminDashboard /> : <Login />} />
           <Route path="/login" element={<Login />} />

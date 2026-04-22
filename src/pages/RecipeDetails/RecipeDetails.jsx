@@ -3,7 +3,11 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import API from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import { io } from 'socket.io-client';
 import './RecipeDetails.css';
+
+// Socket initialization — using same origin for simplicity in local dev
+const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
 const REACTIONS = ['❤️', '😂', '😮', '😢', '👏', '🔥'];
 
@@ -76,7 +80,23 @@ const RecipeDetails = () => {
       }
     };
     fetchData();
+    
+    // Join a dedicated room for this recipe to receive real-time updates
+    socket.emit('join_recipe', id);
+    
+    const handleSocketUpdate = (updatedRecipe) => {
+      if (updatedRecipe._id === id) {
+        setRecipe(updatedRecipe);
+      }
+    };
+
+    socket.on('recipe_updated', handleSocketUpdate);
+
     window.scrollTo(0, 0);
+    
+    return () => {
+      socket.off('recipe_updated', handleSocketUpdate);
+    };
   }, [id, currentUser, navigate]);
 
   useEffect(() => {
@@ -121,8 +141,8 @@ const RecipeDetails = () => {
     if (!currentUser) { toast.error('Please login to comment'); return; }
     if (!commentText.trim()) return;
     try {
-      const comments = await API.addComment(id, commentText);
-      setRecipe(prev => ({ ...prev, comments }));
+      const updatedRecipe = await API.addComment(id, commentText);
+      setRecipe(updatedRecipe);
       setCommentText('');
       toast.success('Comment added!');
     } catch { toast.error('Error adding comment'); }
@@ -131,8 +151,8 @@ const RecipeDetails = () => {
   const handleReaction = async (commentId, emoji) => {
     if (!currentUser) { toast.error('Please login to react'); return; }
     try {
-      const comments = await API.reactToComment(id, commentId, emoji);
-      setRecipe(prev => ({ ...prev, comments }));
+      const updatedRecipe = await API.reactToComment(id, commentId, emoji);
+      setRecipe(updatedRecipe);
     } catch { toast.error('Error adding reaction'); }
     setReactionPickerFor(null);
   };
@@ -141,8 +161,8 @@ const RecipeDetails = () => {
     e.preventDefault();
     if (!replyText.trim()) return;
     try {
-      const comments = await API.replyToComment(id, commentId, replyText);
-      setRecipe(prev => ({ ...prev, comments }));
+      const updatedRecipe = await API.replyToComment(id, commentId, replyText);
+      setRecipe(updatedRecipe);
       setReplyText('');
       setReplyingTo(null);
       toast.success('Reply posted!');
@@ -166,9 +186,9 @@ const RecipeDetails = () => {
 
   if (loading) {
     return (
-      <div className="loading-state container" style={{ minHeight: '60vh' }}>
-        <Icon name="chef-hat" size={48} filter="var(--primary-filter)" className="spinner" />
-        <p>Loading signature recipe...</p>
+      <div className="loading-state ds-empty-state container" style={{ minHeight: '60vh' }}>
+        <Icon name="chef-hat" size={48} className="ds-spinner" />
+        <p>Preparing the signature recipe...</p>
       </div>
     );
   }
@@ -270,11 +290,11 @@ const RecipeDetails = () => {
               <span className="stat-value">{recipe.difficulty}</span>
             </div>
           </div>
-          <div className="stat-item">
-            <Icon name="utensils-crossed" size={20} />
+          <div className="stat-item ai-stat">
+            <Icon name="sparkles" size={20} filter="var(--primary-filter)" />
             <div>
-              <span className="stat-label">Servings</span>
-              <span className="stat-value">{recipe.baseQty} {recipe.baseUnit}</span>
+              <span className="stat-label">AI Intelligence</span>
+              <span className="stat-value">Smart Scaling</span>
             </div>
           </div>
         </div>
@@ -352,7 +372,7 @@ const RecipeDetails = () => {
               </form>
 
               <div className="comments-list">
-                {recipe.comments?.length === 0 ? (
+                {!recipe.comments || recipe.comments.length === 0 ? (
                   <div className="empty-comments">
                     <Icon name="message-square" size={40} filter="var(--text-secondary)" />
                     <p>No comments yet. Start the conversation!</p>
@@ -401,7 +421,7 @@ const RecipeDetails = () => {
                               </button>
                               
                               {reactionPickerFor === comment._id && (
-                                <div className="reaction-picker" ref={pickerRef}>
+                                <div className="reaction-picker" ref={pickerRef} style={{ zIndex: 100 }}>
                                   {REACTIONS.map(emoji => (
                                     <button key={emoji} onClick={() => handleReaction(comment._id, emoji)}>{emoji}</button>
                                   ))}
@@ -420,7 +440,6 @@ const RecipeDetails = () => {
                           </div>
                         </div>
 
-                        {/* Chef Replies */}
                         {comment.replies?.map((reply, ri) => (
                           <div key={ri} className="chef-reply">
                             <div className="reply-header">
@@ -458,10 +477,22 @@ const RecipeDetails = () => {
                 <img src={recipe.chef?.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'} alt={recipe.chef?.username} />
                 <h4>{recipe.chef?.username}</h4>
                 <p>{recipe.chef?.bio?.substring(0, 100) || "Professional chef sharing signature recipes."}...</p>
-                <Link to={`/chef/${recipe.chef?._id || recipe.chef}`} className="btn-outline w-100 mt-4" style={{ display: 'block', textAlign: 'center' }}>View Profile</Link>
+                <Link to={`/chef/${recipe.chef?._id || recipe.chef}`} className="btn-pill outline w-100 mt-4">View Profile</Link>
               </div>
             </div>
             
+            <div className="ai-feature-card card-box mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Icon name="sparkles" size={24} filter="var(--primary-filter)" />
+                <h3 className="m-0">AI Intelligence</h3>
+              </div>
+              <p className="text-secondary text-sm">
+                This recipe features <strong>Smart Ingredient Scaling</strong>. 
+                Adjust the quantity in the ingredients section, and our AI will automatically 
+                calculate the perfect proportions for you!
+              </p>
+            </div>
+
             <div className="tips-card card-box mt-4">
               <h3>Cooking Tips</h3>
               <p className="text-secondary text-sm">

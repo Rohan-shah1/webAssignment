@@ -19,9 +19,9 @@ const Icon = ({ name, size = 20, filter = 'var(--icon-filter)', className = "" }
 const ChefDashboard = () => {
   const { userInfo, login, logout } = useAuth();
 
-  const isFoodLover = userInfo?.role === 'Food Lover' || userInfo?.role === 'Normal User';
+  const isFoodLover = userInfo?.role === 'Food Lover';
   const isAdmin = userInfo?.role === 'Admin';
-  const [activeTab, setActiveTab] = useState(isFoodLover ? 'browse' : (isAdmin ? 'profile' : 'recipes'));
+  const [activeTab, setActiveTab] = useState(isFoodLover ? 'browse' : 'recipes');
   
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(!isFoodLover);
@@ -30,17 +30,17 @@ const ChefDashboard = () => {
   const [currentRecipeId, setCurrentRecipeId] = useState(null);
   const [recipeData, setRecipeData] = useState({ title: '', ingredients: '', instructions: '', category: 'Other', difficulty: 'Medium', prepTime: '' });
 
-  const [profileData, setProfileData] = useState({
-    username: userInfo?.username || '',
-    bio: userInfo?.bio || '',
-  });
-  const [profileImage, setProfileImage] = useState(null);
   const [recipeImage, setRecipeImage] = useState(null);
   const [followedChefs, setFollowedChefs] = useState([]);
   const [followedLoading, setFollowedLoading] = useState(false);
 
   if (!userInfo) {
-    return <div className="dashboard-page container py-8 text-center text-secondary">Loading dashboard...</div>;
+    return (
+      <div className="dashboard-page ds-empty-state container" style={{ minHeight: '60vh' }}>
+        <Icon name="chef-hat" size={48} className="ds-spinner" />
+        <p>Loading your dashboard...</p>
+      </div>
+    );
   }
 
   const handleRecipeSubmit = async (e) => {
@@ -99,21 +99,7 @@ const ChefDashboard = () => {
     setShowModal(true);
   };
 
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData();
-      formData.append('username', profileData.username);
-      formData.append('bio', profileData.bio);
-      if (profileImage) formData.append('profilePicture', profileImage);
 
-      const updated = await API.updateProfile(formData);
-      login(updated);
-      toast.success('Profile updated successfully!');
-    } catch (error) {
-      toast.error(error.message || 'Failed to update profile');
-    }
-  };
 
   useEffect(() => {
     const fetchMyRecipes = async () => {
@@ -147,11 +133,7 @@ const ChefDashboard = () => {
     fetchFollowed();
   }, [isFoodLover]);
 
-  const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    window.location.href = '/';
-  };
+
 
   const deleteRecipe = async (id) => {
     try {
@@ -192,7 +174,7 @@ const ChefDashboard = () => {
                     <Icon name="edit-2" size={18} filter="var(--primary-color)" />
                   </button>
                   <button className="btn-icon text-danger" onClick={() => deleteRecipe(recipe._id)}>
-                    <Icon name="trash-2" size={18} filter="#ef4444" />
+                    <Icon name="trash-2" size={18} />
                   </button>
                 </div>
               </div>
@@ -223,8 +205,8 @@ const ChefDashboard = () => {
               <p>Loading followed chefs...</p>
             </div>
           ) : followedChefs.length === 0 ? (
-            <div className="text-center py-8 text-secondary">
-              <Icon name="users" size={48} className="mx-auto mb-4 opacity-50" />
+            <div className="ds-empty-state">
+              <Icon name="users" size={48} className="mx-auto mb-4" />
               <p>You haven't followed any chefs yet.</p>
               <button className="btn-outline mt-4" onClick={() => setActiveTab('browse')}>Discover Chefs</button>
             </div>
@@ -237,7 +219,7 @@ const ChefDashboard = () => {
                     <p className="text-secondary text-sm">{chef.bio || 'Professional chef on RecipeNest.'}</p>
                   </div>
                   <div className="recipe-actions">
-                    <span className="btn-outline btn-sm">View Profile</span>
+                    <span className="btn-pill outline btn-sm">View Profile</span>
                   </div>
                 </Link>
               ))}
@@ -247,44 +229,7 @@ const ChefDashboard = () => {
       );
     }
 
-    if (activeTab === 'profile') {
-      return (
-        <div className="dashboard-panel">
-          <h2>Edit Profile</h2>
-          <div className="header-line-sm mb-4"></div>
-          <form className="profile-form" onSubmit={handleUpdateProfile}>
-            <div className="form-group">
-              <label>Full Name / Username</label>
-              <input
-                type="text"
-                value={profileData.username}
-                onChange={e => setProfileData({ ...profileData, username: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Bio</label>
-              <textarea
-                rows="4"
-                value={profileData.bio}
-                onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
-              ></textarea>
-            </div>
-            <div className="form-group">
-              <label>Profile Picture</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={e => setProfileImage(e.target.files[0])}
-              />
-              <p className="text-secondary mt-1 profile-help-text">
-                Leave empty to keep current picture. Recommended size: 500x500px.
-              </p>
-            </div>
-            <button type="submit" className="btn-primary mt-4">Save Changes</button>
-          </form>
-        </div>
-      );
-    }
+
   };
 
   return (
@@ -324,15 +269,8 @@ const ChefDashboard = () => {
                 <Icon name="book-open" size={20} /> My Recipes
               </button>
             )}
-            <button
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <Icon name="settings" size={20} /> Profile Settings
-            </button>
-            <button className="nav-item text-danger mt-auto" onClick={handleLogout}>
-              <Icon name="log-out" size={20} filter="#ef4444" /> Log Out
-            </button>
+
+
           </nav>
         </aside>
 

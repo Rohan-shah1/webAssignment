@@ -4,6 +4,7 @@
   --primary-color: #d97706; /* amber-600 */
   --primary-hover: #b45309; /* amber-700 */
   --primary-filter: invert(58%) sepia(93%) saturate(1352%) hue-rotate(359deg) brightness(102%) contrast(107%);
+  --danger-filter: invert(27%) sepia(91%) saturate(6348%) hue-rotate(351deg) brightness(92%) contrast(104%);
   --icon-filter: invert(0);
   --bg-color: #ffffff;
   --text-primary: #111827; /* gray-900 */
@@ -12,7 +13,7 @@
   --border-color: #e5e7eb; /* gray-200 */
   --surface-color: #ffffff;
   --toast-success: #10b981;
-  --toast-error: #ef4444;
+  --toast-error: #d63031;
   --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --transition-speed: 0.3s;
@@ -152,3 +153,53 @@ input, select, textarea, button {
 .mt-4 { margin-top: 1rem; }
 .mb-4 { margin-bottom: 1rem; }
 .mb-8 { margin-bottom: 2rem; }
+
+/* Custom Aesthetic Toast Notifications */
+.Toastify__toast {
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  font-family: inherit;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+  background: var(--surface-color) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color);
+}
+
+.Toastify__toast--success {
+  border-left: 6px solid var(--toast-success);
+}
+
+.Toastify__toast--error {
+  border-left: 6px solid var(--toast-error);
+}
+
+.Toastify__toast--warning {
+  border-left: 6px solid #f59e0b;
+}
+
+.Toastify__toast--info {
+  border-left: 6px solid #3b82f6;
+}
+
+.Toastify__close-button {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.Toastify__toast-body {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.Toastify__progress-bar {
+  height: 3px;
+}
+
+.Toastify__progress-bar--success {
+  background: var(--toast-success);
+}
+
+.Toastify__progress-bar--error {
+  background: var(--toast-error);
+}

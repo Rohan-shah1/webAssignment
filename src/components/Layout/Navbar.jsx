@@ -56,26 +56,29 @@ const Navbar = ({ theme, toggleTheme }) => {
         <div
           id="primary-navigation"
           className={`navbar-links ${menuOpen ? 'open' : ''}`}
-          onClick={() => setMenuOpen(false)}
         >
-          <Link to="/" className="nav-link">Chefs List</Link>
-          <Link to="/recipes" className="nav-link">Recipes</Link>
+          <Link to="/" className="nav-link" onClick={() => setMenuOpen(false)}>Chefs List</Link>
+          <Link to="/recipes" className="nav-link" onClick={() => setMenuOpen(false)}>Recipes</Link>
+          
           {userInfo ? (
             <>
-              {userInfo.role === 'Admin' ? (
-                <Link to="/admin" className="nav-link">Dashboard</Link>
-              ) : (
-                <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              )}
-              <Link to="/profile" className="nav-link">Profile</Link>
-              <Link to="/saved-recipes" className="nav-link">Saved</Link>
+              <Link 
+                to={userInfo.role === 'Admin' ? "/admin" : "/dashboard"} 
+                className="nav-link" 
+                onClick={() => setMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <Link to="/profile" className="nav-link" onClick={() => setMenuOpen(false)}>Profile</Link>
+              <Link to="/saved-recipes" className="nav-link" onClick={() => setMenuOpen(false)}>Saved</Link>
             </>
           ) : (
             <>
-              <Link to="/register" className="nav-link">Join Us</Link>
-              <Link to="/login" className="nav-link login-btn">Log In</Link>
+              <Link to="/register" className="nav-link" onClick={() => setMenuOpen(false)}>Join Us</Link>
+              <Link to="/login" className="nav-link login-btn" onClick={() => setMenuOpen(false)}>Log In</Link>
             </>
           )}
+          
           <button
             type="button"
             onClick={(e) => {
@@ -83,12 +86,12 @@ const Navbar = ({ theme, toggleTheme }) => {
               toggleTheme();
             }}
             className="theme-toggle"
-            aria-label="Toggle Theme"
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
             {theme === 'light' ? (
-              <img src="https://unpkg.com/lucide-static@latest/icons/moon.svg" alt="Moon" style={{ width: 20, height: 20, filter: 'var(--icon-filter)' }} />
+              <img src="https://unpkg.com/lucide-static@latest/icons/moon.svg" alt="Dark Mode" style={{ width: 20, height: 20, filter: 'var(--icon-filter)' }} />
             ) : (
-              <img src="https://unpkg.com/lucide-static@latest/icons/sun.svg" alt="Sun" style={{ width: 20, height: 20, filter: 'var(--icon-filter)' }} />
+              <img src="https://unpkg.com/lucide-static@latest/icons/sun.svg" alt="Light Mode" style={{ width: 20, height: 20, filter: 'var(--icon-filter)' }} />
             )}
           </button>
         </div>

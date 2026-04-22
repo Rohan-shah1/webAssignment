@@ -41,7 +41,7 @@ const RecipeFeed = () => {
 
       <div className="search-filter-bar mb-8 p-4 ds-card">
         <form onSubmit={fetchRecipes} className="ds-row">
-          <div className="ds-input-group" style={{ flex: '1 1 320px' }}>
+          <div className="ds-input-group" style={{ flex: '2 1 300px' }}>
             <img 
               src="https://unpkg.com/lucide-static@latest/icons/search.svg" 
               alt="Search" 
@@ -58,6 +58,7 @@ const RecipeFeed = () => {
           
           <select 
             className="ds-select"
+            style={{ flex: '1 1 150px' }}
             value={category}
             onChange={(e) => setCategory(e.target.value)}
           >
@@ -71,6 +72,7 @@ const RecipeFeed = () => {
 
           <select 
             className="ds-select"
+            style={{ flex: '1 1 150px' }}
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value)}
           >
@@ -80,7 +82,7 @@ const RecipeFeed = () => {
             <option value="Hard">Hard</option>
           </select>
 
-          <button type="submit" className="btn-primary flex-align">
+          <button type="submit" className="btn-primary flex-align" style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}>
             <img 
               src="https://unpkg.com/lucide-static@latest/icons/filter.svg" 
               alt="Filter" 
@@ -121,7 +123,7 @@ const RecipeFeed = () => {
                 <p className="text-secondary text-sm mb-2">By {recipe.chef?.username || 'Unknown Chef'}</p>
                 <div className="recipe-footer mt-4">
                   <span className="recipe-time">🕒 {recipe.prepTime ? `${recipe.prepTime} min` : 'N/A'}</span>
-                  <span className="btn-outline btn-sm">View Recipe</span>
+                  <span className="btn-pill outline btn-sm">View Recipe</span>
                 </div>
               </div>
             </Link>

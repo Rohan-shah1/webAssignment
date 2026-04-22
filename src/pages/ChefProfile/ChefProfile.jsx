@@ -119,7 +119,7 @@ const ChefProfile = () => {
 
           {userInfo?._id !== chef.id && (
             <button
-              className={`btn-follow ${isFollowing ? 'following' : ''}`}
+              className={`btn-pill ${isFollowing ? 'outline' : 'primary'} w-100 mt-6`}
               onClick={handleToggleFollow}
               disabled={followLoading}
             >
@@ -156,7 +156,7 @@ const ChefProfile = () => {
                     <p className="recipe-desc">{recipe.description.substring(0, 60)}...</p>
                     <div className="recipe-footer mt-auto pt-4">
                       <span className="recipe-time">🕒 {recipe.time}</span>
-                      <span className="btn-outline btn-sm">View Recipe</span>
+                      <span className="btn-pill outline btn-sm">View Recipe</span>
                     </div>
                   </div>
                 </Link>

@@ -83,7 +83,7 @@
 }
 
 .text-danger:hover {
-  background: rgba(239, 68, 68, 0.1) !important;
+  background: rgba(239, 68, 68, 0.25) !important;
 }
 
 .mt-auto {
@@ -162,11 +162,13 @@
 
 .btn-icon {
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-color);
 }
 
 .btn-icon:hover {
@@ -175,7 +177,11 @@
 }
 
 .text-primary {
-  color: var(--primary-color);
+  color: var(--primary-color) !important;
+}
+
+.text-primary:hover {
+  background: rgba(217, 119, 6, 0.2) !important;
 }
 
 /* Form Styles */
@@ -329,4 +335,68 @@
   .grid-3 {
     grid-template-columns: 1fr;
   }
+}
+/* Layout Utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.m-0 { margin: 0; }
+.mb-1 { margin-bottom: 0.25rem; }
+.text-xs { font-size: 0.75rem; }
+.font-bold { font-weight: 700; }
+.text-right { text-align: right; }
+
+/* Modal Overlay & Content */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 500px;
+  background: var(--surface-color);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.gap-3 { gap: 1rem; }
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+}
+
+.badge.primary {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--primary-color);
+  border-color: rgba(217, 119, 6, 0.2);
 }
