@@ -7,8 +7,16 @@ const Recipe = require('../models/Recipe');
 const getChefs = async (req, res) => {
   try {
     const chefs = await User.find({ role: 'Chef' }).select('-password');
-    res.json(chefs);
+    const chefsWithCount = await Promise.all(chefs.map(async (chef) => {
+      const recipesCount = await Recipe.countDocuments({ chef: chef._id });
+      return {
+        ...chef._doc,
+        recipesCount
+      };
+    }));
+    res.json(chefsWithCount);
   } catch (error) {
+    console.error('Get Chefs Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

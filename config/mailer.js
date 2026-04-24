@@ -66,4 +66,63 @@ const sendOtpEmail = async (to, otp, subject, purpose = 'verification') => {
   await sgMail.send(msg);
 };
 
-module.exports = { sendOtpEmail };
+/**
+ * Send a notification email when an Admin deletes a recipe
+ * @param {string} to - chef's email
+ * @param {string} recipeTitle - title of the deleted recipe
+ * @param {string} reason - admin's reason/feedback for deletion
+ */
+const sendRecipeDeletionEmail = async (to, recipeTitle, reason) => {
+  const msg = {
+    to,
+    from: {
+      email: process.env.SENDGRID_FROM_EMAIL,
+      name: 'RecipeNest Admin',
+    },
+    subject: 'Important: Your Recipe was Removed',
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body { font-family: 'Inter', Arial, sans-serif; background: #f9fafb; margin: 0; padding: 0; }
+            .container { max-width: 520px; margin: 40px auto; background: #ffffff; border-radius: 16px;
+                         border: 1px solid #e5e7eb; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+            .header { background: linear-gradient(90deg, #ef4444, #dc2626); padding: 28px 32px; text-align: center; }
+            .header h1 { color: white; margin: 0; font-size: 24px; letter-spacing: -0.5px; }
+            .body { padding: 36px 32px; }
+            .body p { color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
+            .reason-box { background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 0 8px 8px 0;
+                       padding: 20px; margin: 24px 0; }
+            .footer { text-align: center; padding: 20px 32px; border-top: 1px solid #e5e7eb; }
+            .footer p { color: #9ca3af; font-size: 12px; margin: 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Recipe Removed</h1>
+            </div>
+            <div class="body">
+              <p>Hello Chef,</p>
+              <p>We are writing to inform you that your recipe "<strong>${recipeTitle}</strong>" has been removed from RecipeNest by an administrator.</p>
+              <p><strong>Admin Feedback / Reason:</strong></p>
+              <div class="reason-box">
+                <p style="margin:0; font-style: italic; color: #7f1d1d;">"${reason}"</p>
+              </div>
+              <p>If you believe this was an error, please reply to this email to contact support.</p>
+            </div>
+            <div class="footer">
+              <p>© 2025 RecipeNest. All rights reserved.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+
+  await sgMail.send(msg);
+};
+
+module.exports = { sendOtpEmail, sendRecipeDeletionEmail };

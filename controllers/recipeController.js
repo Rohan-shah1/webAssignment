@@ -1,5 +1,7 @@
 const Recipe = require('../models/Recipe');
+const User = require('../models/User');
 const cloudinary = require('../config/cloudinary');
+const { sendRecipeDeletionEmail } = require('../config/mailer');
 const { Readable } = require('stream');
 
 const normalizeIngredients = (ingredients) => {
@@ -20,13 +22,18 @@ const normalizeIngredients = (ingredients) => {
   return [];
 };
 
-// GET /api/recipes - Fetch all recipes with optional filters (search, category, difficulty)
+/**
+ * Fetch all recipes
+ * Implements a dynamic query builder to handle search, category, and difficulty filtering.
+ * We populate the 'chef' field so we can show the creator's info on cards without extra API calls.
+ */
 const getRecipes = async (req, res) => {
   try {
     const { search, category, difficulty } = req.query;
 
     let query = {};
     
+    // Fuzzy search on title and ingredients - good for user experience
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -34,18 +41,14 @@ const getRecipes = async (req, res) => {
       ];
     }
     
-    if (category) {
-      query.category = category;
-    }
-    
-    if (difficulty) {
-      query.difficulty = difficulty;
-    }
+    // Strict matching for specific tags
+    if (category) query.category = category;
+    if (difficulty) query.difficulty = difficulty;
 
     const recipes = await Recipe.find(query).populate('chef', 'username profilePicture');
     res.json(recipes);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Failed to retrieve recipes' });
   }
 };
 
@@ -56,32 +59,40 @@ const getRecipeById = async (req, res) => {
     if (recipe) {
       res.json(recipe);
     } else {
-      res.status(404).json({ message: 'Recipe not found' });
+      res.status(404).json({ message: 'We couldn\'t find that recipe. It might have been deleted.' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Error fetching recipe details' });
   }
 };
 
-// POST /api/recipes - Create a new recipe (Requires Chef or Admin role)
+/**
+ * Create Recipe Logic
+ * Handles both JSON data and multipart/form-data (for image uploads via Cloudinary)
+ */
 const createRecipe = async (req, res) => {
   try {
     const { title, ingredients, instructions, image, category, difficulty, prepTime, baseQty, baseUnit } = req.body;
 
+    // Strict Input Validation
+    if (!title || typeof title !== 'string' || title.trim() === '') {
+      return res.status(400).json({ message: 'Recipe title is required.' });
+    }
+
+    if (!ingredients || (typeof ingredients !== 'string' && !Array.isArray(ingredients))) {
+      return res.status(400).json({ message: 'Ingredients are required.' });
+    }
+
     let imageUrl = image;
 
-    // Process image file attachment if provided by the client
+    // Handle Image Upload to Cloudinary
+
+    // We use a stream here to avoid saving the file locally first (better for performance and serverless)
     if (req.file) {
-      // Cloudinary stream upload wrapped in a Promise to return the secure URL.
-      // A raw memory buffer pipeline is constructed to transfer data to the cloud.
       const streamUpload = (req) => {
         return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream({ folder: 'recipes' }, (error, result) => {
-            if (result) {
-              resolve(result);
-            } else {
-              reject(error);
-            }
+            if (result) resolve(result); else reject(error);
           });
           Readable.from(req.file.buffer).pipe(stream);
         });
@@ -92,6 +103,7 @@ const createRecipe = async (req, res) => {
 
     const recipe = new Recipe({
       title,
+      // Normalize ingredients string/array into a clean array
       ingredients: normalizeIngredients(ingredients),
       instructions,
       image: imageUrl,
@@ -100,13 +112,14 @@ const createRecipe = async (req, res) => {
       prepTime,
       baseQty: baseQty ? Number(baseQty) : 1,
       baseUnit: baseUnit || 'kg',
-      chef: req.user._id,
+      chef: req.user._id, // Assign the currently logged-in user as the chef
     });
 
     const createdRecipe = await recipe.save();
     res.status(201).json(createdRecipe);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error' });
+    console.error('CreateRecipe Error:', error);
+    res.status(500).json({ message: 'Error creating recipe. Please check your inputs.' });
   }
 };
 
@@ -170,18 +183,33 @@ const updateRecipe = async (req, res) => {
 // DELETE /api/recipes/:id - Delete a recipe (Requires Chef Owner or Admin)
 const deleteRecipe = async (req, res) => {
   try {
-    const recipe = await Recipe.findById(req.params.id);
+    // Populate the chef to access their email address for notifications
+    const recipe = await Recipe.findById(req.params.id).populate('chef', 'email username');
 
     if (recipe) {
-      if (recipe.chef.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
+      // Check authorization
+      if (recipe.chef._id.toString() !== req.user._id.toString() && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Not authorized to delete this recipe' });
       }
 
       const { reason } = req.body;
       if (req.user.role === 'Admin' && reason) {
         console.log(`[ADMIN ACTION] Recipe "${recipe.title}" deleted by Admin ${req.user.username}. Reason: ${reason}`);
-        // Here you could also send an email to the chef or save to a log model
+        
+        // Notify the chef via email
+        try {
+          await sendRecipeDeletionEmail(recipe.chef.email, recipe.title, reason);
+        } catch (emailError) {
+          console.error('Failed to send deletion notification email:', emailError.message);
+          // We don't want to abort the deletion just because the email failed
+        }
       }
+
+      // Active Cleanup: Remove this recipe from ANY user's savedRecipes array to prevent UI crashes
+      await User.updateMany(
+        { savedRecipes: recipe._id },
+        { $pull: { savedRecipes: recipe._id } }
+      );
 
       await recipe.deleteOne();
       res.json({ message: 'Recipe removed successfully' });
@@ -189,6 +217,7 @@ const deleteRecipe = async (req, res) => {
       res.status(404).json({ message: 'Recipe not found' });
     }
   } catch (error) {
+    console.error('DeleteRecipe Error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 };

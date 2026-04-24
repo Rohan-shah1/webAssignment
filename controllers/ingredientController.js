@@ -61,16 +61,21 @@ const tryGroqParse = async ({ prompt, ingredients }) => {
     });
 };
 
-// POST /api/ingredients/normalize
-// Body: { ingredients: string[] | string, baseQty?: number, desiredQty?: number }
+/**
+ * AI-Powered Ingredient Normalization
+ * Unlike standard scaling which uses division (and often fails on "a pinch" or "3 large tomatoes"),
+ * this controller uses LLMs to semantically understand and scale the ingredients.
+ */
 const normalizeIngredientsAi = async (req, res) => {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(501).json({ message: 'GEMINI_API_KEY not configured' });
+      return res.status(501).json({ message: 'AI services are not configured (Missing Gemini Key)' });
     }
 
     const { ingredients, baseQty = 1, desiredQty = 1 } = req.body || {};
+    
+    // Normalize input format: handle both comma-separated strings and arrays
     const list = Array.isArray(ingredients)
       ? ingredients
       : typeof ingredients === 'string'
@@ -81,6 +86,11 @@ const normalizeIngredientsAi = async (req, res) => {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
+    /**
+     * Prompt Engineering
+     * We're instructing the model to act as a culinary expert.
+     * We enforce a strict JSON output so our frontend can map the data to a clean table.
+     */
     const prompt = [
       'You are an expert cooking assistant.',
       'Return ONLY valid JSON (no markdown, no code fences).',
@@ -102,6 +112,12 @@ const normalizeIngredientsAi = async (req, res) => {
 
     let parsed = null;
     let lastError = null;
+
+    /**
+     * Fallback Strategy
+     * AI APIs can be flaky or hit rate limits. We try multiple Gemini models
+     * and finally fall back to Groq (Llama 3) to ensure the user always gets a result.
+     */
     for (const modelName of MODEL_CANDIDATES) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });

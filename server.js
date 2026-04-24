@@ -1,40 +1,74 @@
+// Core Express server configuration
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 
-// Load env vars
+// Pull environment variables from .env file (Secrets like DB URI, JWT keys)
 dotenv.config();
 
-// Connect to database
+// Establish connection to MongoDB Atlas
+// If this fails, the app won't have a data layer, so it's the first thing we do
 connectDB();
 
 const app = express();
+
+/**
+ * Socket.io Setup
+ * We're using HTTP server directly to wrap Express for real-time capabilities
+ * especially for the live recipe update features.
+ */
 const httpServer = require('http').createServer(app);
 const io = require('socket.io')(httpServer, {
   cors: {
-    origin: "*", // Adjust this for production to match your frontend URL
+    origin: "*", // Using wildcard for local dev, should be locked down in production
     methods: ["GET", "POST"]
   }
 });
 
-// Attach io to app so it's accessible in controllers
+// Storing the io instance in app settings so controllers can emit events easily
 app.set('io', io);
 
-// --- Middleware Setup --- //
-// Parse incoming JSON request bodies
+// --- Global Middleware --- //
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Use Helmet to secure HTTP headers
+app.use(helmet());
+
+// Global Rate Limiter to prevent brute-force attacks
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per `window`
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Apply the rate limiting middleware to all requests
+app.use('/api', apiLimiter);
+
+// Handle JSON payloads — vital for our React frontend which sends JSON exclusively
 app.use(express.json());
-// Enable cross-origin resource sharing for frontend communication
+
+// CORS is required since our frontend (Port 5173) and backend (Port 5000) run on different ports
 app.use(cors());
 
-// Routes
+// Swagger Documentation - accessible at /api-docs
+// This provides an interactive UI for testing endpoints without Postman
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// --- API Routing --- //
+// We've modularized routes into separate files to keep this main file clean
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/recipes', require('./routes/recipeRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/ingredients', require('./routes/ingredientRoutes'));
 
-// Basic Route
+// Health check route to verify server status
 app.get('/', (req, res) => {
   res.send('RecipeNest API is running...');
 });
@@ -45,15 +79,17 @@ httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
+// Real-time event handling via WebSockets
 io.on('connection', (socket) => {
-  console.log('User connected to socket:', socket.id);
+  console.log('New client handshake established:', socket.id);
   
+  // Rooms allow us to broadcast updates only to users viewing a specific recipe
   socket.on('join_recipe', (recipeId) => {
     socket.join(recipeId);
     console.log(`User ${socket.id} joined room: ${recipeId}`);
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('Client disconnected from socket server');
   });
 });

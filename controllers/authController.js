@@ -15,18 +15,41 @@ const generateToken = (id) => {
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// @desc    Register new user
-// @route   POST /api/auth/register
-// @access  Public
+/**
+ * Register User Logic
+ * Instead of creating a User immediately, we store them in 'PendingRegistration'.
+ * This ensures we don't have 'ghost' accounts from people who never verify their email.
+ */
 const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
+  
+  // Strict Input Validation
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: 'Please provide valid username, email, and password.' });
+  }
+
+  // Email format validation (e.g., must contain @ and a domain)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: 'Please provide a valid email address.' });
+  }
+
+  // Strong password validation: Min 8 characters, at least 1 letter and 1 number
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+  if (!passwordRegex.test(password)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long and contain both letters and numbers.' });
+  }
+
   try {
+    // Basic check: don't allow duplicate emails
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
+    // Generate a 6-digit numeric OTP
     const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minute window for security
 
+    // Upsert logic: if they try to register again before verifying, we just update the OTP
     await PendingRegistration.findOneAndUpdate(
       { email },
       {
@@ -39,42 +62,54 @@ const registerUser = async (req, res) => {
     );
 
     try {
+      // Attempt to send the email. If this fails, we catch it separately so we can 
+      // notify the user about the email service status.
       await sendOtpEmail(email, otp, 'Verify your RecipeNest account', 'Email verification');
       res.status(200).json({ requiresOtp: true, email, message: 'OTP sent to email' });
     } catch (emailError) {
-      console.error('SendGrid Email Error:', emailError.message);
-      res.status(500).json({ message: 'OTP email failed to send.' });
+      console.error('SendGrid/Mailer Error:', emailError.message);
+      res.status(500).json({ message: 'We couldn\'t send the OTP email. Please try again later.' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };
 
-// @desc    Verify OTP for regular email registration
-// @route   POST /api/auth/verify-email-otp
-// @access  Public
+/**
+ * Verify OTP Logic
+ * Once the user enters the code from their email, we finally move them to the User collection.
+ */
 const verifyEmailOtp = async (req, res) => {
   const { email, otp, role } = req.body;
   try {
+    // Find the temporary data we stored during the registerUser call
     const pendingData = await PendingRegistration.findOne({ email, type: 'regular_signup' });
     
-    if (!pendingData) return res.status(400).json({ message: 'No pending registration found for this email' });
-    if (Date.now() > pendingData.otpExpiry.getTime()) return res.status(400).json({ message: 'OTP has expired' });
-    if (pendingData.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
+    if (!pendingData) return res.status(400).json({ message: 'No registration session found. Did it expire?' });
+    
+    // Security: Check if 10 mins have passed
+    if (Date.now() > pendingData.otpExpiry.getTime()) {
+      return res.status(400).json({ message: 'This OTP has expired. Please request a new one.' });
+    }
+    
+    // Constant time comparison would be better here, but for an assignment this is standard
+    if (pendingData.otp !== otp) return res.status(400).json({ message: 'The code you entered is incorrect.' });
 
-    // OTP matches, create the user
+    // Map registration data to final User model
     const { username, password } = pendingData.registrationData;
     
+    // Default to 'Food Lover' if something weird happens with the role selection
     const allowedRoles = ['Chef', 'Food Lover'];
     const safeRole = allowedRoles.includes(role) ? role : 'Food Lover';
 
-    // User model will hash plain text password in pre('save')
+    // The 'User' model handles password hashing automatically via pre-save hooks
     const user = await User.create({ username, email, password, role: safeRole });
 
-    // Clean up
+    // CRITICAL: Once the user is verified and created, delete the temporary pending record
     await PendingRegistration.deleteOne({ _id: pendingData._id });
 
     if (user) {
+      // Return user data along with a freshly signed JWT token
       res.status(201).json({
         _id: user._id, 
         username: user.username, 
@@ -87,11 +122,11 @@ const verifyEmailOtp = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: 'Invalid user data' });
+      res.status(400).json({ message: 'We encountered an error creating your profile.' });
     }
   } catch (error) {
-    console.error('Verify Email OTP error:', error);
-    res.status(500).json({ message: 'Server error verifying OTP' });
+    console.error('OTP Verification Error:', error);
+    res.status(500).json({ message: 'Server-side error during verification.' });
   }
 };
 
@@ -136,6 +171,11 @@ const resendOtp = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password || typeof email !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ message: 'Please provide both email and password.' });
+  }
+
   try {
     const user = await User.findOne({ email });
     if (user && (await user.matchPassword(password))) {
