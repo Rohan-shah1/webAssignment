@@ -97,28 +97,30 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group mb-6">
             <label>Email Address</label>
-            <div className="input-group">
-              <Icon name="mail" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="mail" size={20} className="ds-muted" />
               <input 
                 type="email" 
                 placeholder="name@example.com" 
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
           
           <div className="form-group mb-4">
             <label>Password</label>
-            <div className="input-group">
-              <Icon name="lock" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
                 placeholder="••••••••" 
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
@@ -127,7 +129,7 @@ const Login = () => {
             <Link to="/forgot-password" style={{ color: 'var(--primary-color)', fontWeight: 600 }}>Forgot password?</Link>
           </div>
 
-          <button type="submit" className="btn-primary w-100 auth-submit-btn" disabled={loading}>
+          <button type="submit" className="btn-pill primary w-100" disabled={loading}>
             {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>

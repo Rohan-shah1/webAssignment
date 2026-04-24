@@ -137,7 +137,7 @@ const AdminDashboard = () => {
                           <span className={`badge ${u.role === 'Chef' ? 'primary' : ''}`}>{u.role}</span>
                         </td>
                         <td className="p-3 text-right">
-                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)} title="Delete User">
+                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)} title="Delete User" style={{ display: 'inline-flex', marginLeft: 'auto' }}>
                             <Icon name="trash-2" size={18} />
                           </button>
                         </td>

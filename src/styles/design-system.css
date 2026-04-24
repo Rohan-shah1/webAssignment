@@ -178,6 +178,11 @@
   cursor: pointer;
 }
 
+.btn-sm {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+}
+
 .btn-pill.primary {
   background: var(--primary-color);
   color: white;

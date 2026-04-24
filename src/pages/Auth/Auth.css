@@ -48,44 +48,7 @@
   color: var(--text-primary);
 }
 
-.input-group {
-  position: relative;
-  display: block;
-  width: 100%;
-}
-
-.input-icon {
-  position: absolute;
-  left: 1.25rem;
-  top: 0;
-  bottom: 0;
-  margin: auto 0;
-  opacity: 0.5;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.auth-form input {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.875rem 1rem 0.875rem 3.5rem;
-  background: var(--bg-secondary);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 1rem;
-  line-height: 1.5;
-  margin: 0;
-  transition: all 0.3s ease;
-}
-
-.auth-form input:focus {
-  border-color: var(--primary-color);
-  outline: none;
-  background: var(--surface-color);
-  box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.1);
-}
+/* Removed custom input styles to enforce global design-system.css usage */
 
 .auth-footer {
   margin-top: 2rem;

@@ -67,6 +67,19 @@ const Register = () => {
       toast.error('Please fill in all required fields.');
       return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      toast.error('Password must be at least 8 characters long and contain both letters and numbers.');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match.');
       return;
@@ -100,61 +113,65 @@ const Register = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group mb-4">
             <label>Username</label>
-            <div className="input-group">
-              <Icon name="user" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="user" size={20} className="ds-muted" />
               <input 
                 type="text" 
                 placeholder="Chef Gordon" 
                 value={formData.username}
                 onChange={e => setFormData({...formData, username: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
 
           <div className="form-group mb-4">
             <label>Email Address</label>
-            <div className="input-group">
-              <Icon name="mail" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="mail" size={20} className="ds-muted" />
               <input 
                 type="email" 
                 placeholder="name@example.com" 
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
           
           <div className="form-group mb-4">
             <label>Password</label>
-            <div className="input-group">
-              <Icon name="lock" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
                 placeholder="••••••••" 
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
 
           <div className="form-group mb-6">
             <label>Confirm Password</label>
-            <div className="input-group">
-              <Icon name="lock" size={20} className="input-icon" />
+            <div className="ds-input-group">
+              <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
                 placeholder="••••••••" 
                 value={formData.confirmPassword}
                 onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
                 required
+                className="ds-input"
               />
             </div>
           </div>
 
-          <button type="submit" className="btn-primary w-100 auth-submit-btn" disabled={loading}>
+          <button type="submit" className="btn-pill primary w-100" disabled={loading}>
             {loading ? 'Creating Account...' : 'Register Account'}
           </button>
           

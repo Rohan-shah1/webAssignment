@@ -213,7 +213,7 @@ const ChefDashboard = () => {
           ) : (
             <div className="recipe-list">
               {followedChefs.map((chef) => (
-                <Link to={`/chef/${chef._id}`} key={chef._id} className="dashboard-recipe-card ds-link-card">
+                <Link to={`/chef/${chef._id}`} key={chef._id} className="dashboard-recipe-card">
                   <div className="recipe-summary">
                     <h3>{chef.username}</h3>
                     <p className="text-secondary text-sm">{chef.bio || 'Professional chef on RecipeNest.'}</p>
@@ -295,7 +295,7 @@ const ChefDashboard = () => {
                   <input
                     type="file"
                     accept="image/*"
-                    className="modern-input"
+                    className="ds-input"
                     onChange={e => setRecipeImage(e.target.files[0])}
                   />
                 </div>
@@ -303,7 +303,7 @@ const ChefDashboard = () => {
                   <label>Recipe Title</label>
                   <input
                     type="text"
-                    className="modern-input"
+                    className="ds-input"
                     required
                     placeholder="e.g. Classic Beef Wellington"
                     value={recipeData.title}
@@ -315,7 +315,7 @@ const ChefDashboard = () => {
                   <label>Ingredients (comma separated)</label>
                   <textarea
                     rows="3"
-                    className="modern-input"
+                    className="ds-textarea"
                     required
                     placeholder="1kg Beef fillet, 250g Mushrooms, Puff pastry..."
                     value={recipeData.ingredients}
@@ -327,7 +327,7 @@ const ChefDashboard = () => {
                   <label>Cooking Instructions</label>
                   <textarea
                     rows="5"
-                    className="modern-input"
+                    className="ds-textarea"
                     required
                     placeholder="Step 1: Preheat oven...&#10;Step 2: Sear the beef..."
                     value={recipeData.instructions}
@@ -339,7 +339,7 @@ const ChefDashboard = () => {
                   <div>
                     <label>Category</label>
                     <select
-                      className="modern-input"
+                      className="ds-select"
                       value={recipeData.category}
                       onChange={e => setRecipeData({ ...recipeData, category: e.target.value })}
                     >
@@ -353,7 +353,7 @@ const ChefDashboard = () => {
                   <div>
                     <label>Difficulty</label>
                     <select
-                      className="modern-input"
+                      className="ds-select"
                       value={recipeData.difficulty}
                       onChange={e => setRecipeData({ ...recipeData, difficulty: e.target.value })}
                     >
@@ -367,14 +367,14 @@ const ChefDashboard = () => {
                     <input
                       type="number"
                       min="0"
-                      className="modern-input"
+                      className="ds-input"
                       value={recipeData.prepTime}
                       onChange={e => setRecipeData({ ...recipeData, prepTime: Number(e.target.value) })}
                     />
                   </div>
                 </div>
-                <button type="submit" className="btn-primary w-100 mt-4">
-                  {isEditing ? 'Save Changes' : 'Publish Recipe'}
+                <button type="submit" className="btn-pill primary w-100 mt-4" disabled={loading}>
+                  {loading ? 'Processing...' : (isEditing ? 'Save Changes' : 'Publish Recipe')}
                 </button>
               </form>
             </div>

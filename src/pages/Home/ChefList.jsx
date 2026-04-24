@@ -18,8 +18,8 @@ const ChefList = ({ isDashboardMode = false }) => {
           name: chef.username,
           specialty: chef.bio ? (chef.bio.substring(0, 30) + '...') : 'Culinary Expert',
           rating: 4.8, // Default rating for now
-          image: chef.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-          recipesCount: 0 // Will handle this later or from API
+          image: chef.profilePicture || '../../assets/hero-food.jpg',
+          recipesCount: chef.recipesCount || 0
         }));
         setChefs(mappedChefs);
       } catch (error) {

@@ -19,10 +19,17 @@ import GoogleOtpVerify from './pages/Auth/GoogleOtpVerify';
 import { useEffect, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+/**
+ * AppContent Component
+ * This is the heart of our frontend routing and layout.
+ * It manages the global theme (Light/Dark mode) and defines all application paths.
+ */
 function AppContent() {
+  // Sync theme with localStorage so it persists even after refresh
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-  const { userInfo } = useAuth();
+  const { userInfo } = useAuth(); // Get current user session from our Auth Context
 
+  // Side effect: Update the HTML data-theme attribute whenever the state changes
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
@@ -36,24 +43,35 @@ function AppContent() {
     <Router>
       <Navbar theme={theme} toggleTheme={toggleTheme} />
       <ToastProvider theme={theme} />
+      
+      {/* Main content area - minHeight ensures the footer stays at the bottom */}
       <main style={{ minHeight: 'calc(100vh - 140px)' }}>
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<ChefList />} />
           <Route path="/recipes" element={<RecipeFeed />} />
           <Route path="/recipe/:id" element={<RecipeDetails />} />
           <Route path="/chef/:id" element={<ChefProfile />} />
-          <Route path="/saved-recipes" element={userInfo ? <SavedRecipes /> : <Login />} />
-          <Route path="/profile" element={userInfo ? <UserProfile /> : <Login />} />
-          <Route path="/change-password" element={userInfo ? <ChangePassword /> : <Login />} />
-          <Route path="/dashboard" element={userInfo ? <ChefDashboard /> : <Login />} />
-          <Route path="/admin" element={userInfo?.role === 'Admin' ? <AdminDashboard /> : <Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<EmailOtpVerify />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/google-otp-verify" element={<GoogleOtpVerify />} />
+
+          {/* Protected Routes
+              We use a simple ternary operator to redirect unauthorized users to the login page.
+              A more complex app might use a <ProtectedRoute> component, but this is clean for our scale.
+          */}
+          <Route path="/saved-recipes" element={userInfo ? <SavedRecipes /> : <Login />} />
+          <Route path="/profile" element={userInfo ? <UserProfile /> : <Login />} />
+          <Route path="/change-password" element={userInfo ? <ChangePassword /> : <Login />} />
+          <Route path="/dashboard" element={userInfo ? <ChefDashboard /> : <Login />} />
+          
+          {/* Admin Restricted Route */}
+          <Route path="/admin" element={userInfo?.role === 'Admin' ? <AdminDashboard /> : <Login />} />
         </Routes>
       </main>
+      
       <Footer />
     </Router>
   );

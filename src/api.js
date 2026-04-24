@@ -1,8 +1,17 @@
-// Use same-origin in dev (Vite proxy) and allow override for deploys.
+// Centralized API Base URL configuration
+// Using Vite's env variables for flexibility between dev and production
 const BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+/**
+ * Custom Fetch Wrapper
+ * This function handles common API tasks like:
+ * 1. Attaching the JWT token from localStorage for authenticated requests.
+ * 2. Setting correct Content-Type headers.
+ * 3. Handling both JSON and FormData (for image uploads).
+ * 4. Centralized error handling.
+ */
 const fetchWithAuth = async (endpoint, options = {}) => {
-  // Retrieval of user credentials from local storage
+  // Pull user info (including the token) from persistent storage
   const userInfo = localStorage.getItem('userInfo') 
     ? JSON.parse(localStorage.getItem('userInfo')) 
     : null;
@@ -11,17 +20,23 @@ const fetchWithAuth = async (endpoint, options = {}) => {
     ...options.headers,
   };
 
-  // Content-Type header excluded for FormData to allow browser-specific boundary setting
+  /**
+   * Header Management
+   * Important: We don't set 'Content-Type' if the body is FormData.
+   * The browser needs to set the 'boundary' string itself for file uploads to work.
+   */
   if (!(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // JWT token attachment for backend authentication verification
+  // If a user is logged in, attach their token to the 'Authorization' header
   if (userInfo && userInfo.token) {
     headers.Authorization = `Bearer ${userInfo.token}`;
   }
 
-  console.log(`API Request: ${options.method || 'GET'} ${BASE_URL}${endpoint}`);
+  // Debug log to keep track of network activity during development
+  console.log(`API Call: ${options.method || 'GET'} ${BASE_URL}${endpoint}`);
+
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers,
@@ -29,8 +44,9 @@ const fetchWithAuth = async (endpoint, options = {}) => {
 
   const data = await response.json();
 
+  // Handle non-2xx status codes globally
   if (!response.ok) {
-    throw new Error(data.message || 'Something went wrong');
+    throw new Error(data.message || 'An unexpected error occurred during the API call.');
   }
 
   return data;
