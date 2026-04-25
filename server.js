@@ -10,8 +10,9 @@ const swaggerSpec = require('./config/swagger');
 dotenv.config();
 
 // Establish connection to MongoDB Atlas
-// If this fails, the app won't have a data layer, so it's the first thing we do
-connectDB();
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+}
 
 const app = express();
 
@@ -75,9 +76,13 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  httpServer.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
 
 // Real-time event handling via WebSockets
 io.on('connection', (socket) => {

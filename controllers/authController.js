@@ -58,7 +58,7 @@ const registerUser = async (req, res) => {
         type: 'regular_signup',
         registrationData: { username, password }
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     try {
@@ -118,6 +118,7 @@ const verifyEmailOtp = async (req, res) => {
         bio: user.bio,
         address: user.address,
         profilePicture: user.profilePicture,
+        coverPhoto: user.coverPhoto,
         isGoogleUser: user.isGoogleUser,
         token: generateToken(user._id),
       });
@@ -181,7 +182,8 @@ const loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id, username: user.username, email: user.email,
-        role: user.role, bio: user.bio, address: user.address, profilePicture: user.profilePicture,
+        role: user.role, bio: user.bio, address: user.address, 
+        profilePicture: user.profilePicture, coverPhoto: user.coverPhoto,
         isGoogleUser: user.isGoogleUser, token: generateToken(user._id),
       });
     } else {
@@ -218,7 +220,8 @@ const googleAuth = async (req, res) => {
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
       return res.json({
         _id: user._id, username: user.username, email: user.email,
-        role: user.role, bio: user.bio, address: user.address, profilePicture: user.profilePicture,
+        role: user.role, bio: user.bio, address: user.address, 
+        profilePicture: user.profilePicture, coverPhoto: user.coverPhoto,
         isGoogleUser: true, token: generateToken(user._id),
       });
     }
@@ -238,7 +241,7 @@ const googleAuth = async (req, res) => {
         type,
         registrationData: { googleId, name, picture }
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     try {
@@ -313,6 +316,7 @@ const verifyGoogleOtp = async (req, res) => {
       bio: user.bio, 
       address: user.address, 
       profilePicture: user.profilePicture,
+      coverPhoto: user.coverPhoto,
       isGoogleUser: true, 
       token: generateToken(user._id),
     });
@@ -330,7 +334,8 @@ const getUserProfile = async (req, res) => {
     if (req.user) {
       res.json({
         _id: req.user._id, username: req.user.username, email: req.user.email,
-        role: req.user.role, bio: req.user.bio, address: req.user.address, profilePicture: req.user.profilePicture,
+        role: req.user.role, bio: req.user.bio, address: req.user.address, 
+        profilePicture: req.user.profilePicture, coverPhoto: req.user.coverPhoto,
         isGoogleUser: req.user.isGoogleUser,
       });
     } else {
@@ -362,26 +367,30 @@ const updateUserProfile = async (req, res) => {
       return res.status(400).json({ message: 'Validation failed', error: validationError.message });
     }
 
-    if (req.file) {
-      try {
-        const streamUpload = (req) => new Promise((resolve, reject) => {
-          const stream = cloudinary.uploader.upload_stream({ folder: 'profile_picture' }, (error, result) => {
-            if (result) resolve(result); else reject(error);
-          });
-          Readable.from(req.file.buffer).pipe(stream);
-        });
-        const result = await streamUpload(req);
-        user.profilePicture = result.secure_url;
-      } catch (error) {
-        return res.status(500).json({ message: 'Error uploading image' });
+    const streamUpload = (buffer, folder) => new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({ folder }, (error, result) => {
+        if (result) resolve(result); else reject(error);
+      });
+      Readable.from(buffer).pipe(stream);
+    });
+
+    if (req.files) {
+      if (req.files.profilePicture) {
+        try {
+          const result = await streamUpload(req.files.profilePicture[0].buffer, 'profile_pictures');
+          user.profilePicture = result.secure_url;
+        } catch (err) { console.error('Profile Pic Upload Error:', err); }
       }
-    } else if (req.body.profilePicture) {
-      user.profilePicture = req.body.profilePicture;
+      if (req.files.coverPhoto) {
+        try {
+          const result = await streamUpload(req.files.coverPhoto[0].buffer, 'cover_photos');
+          user.coverPhoto = result.secure_url;
+        } catch (err) { console.error('Cover Photo Upload Error:', err); }
+      }
     }
 
     const updatedUser = await user.save();
     
-    // Return full profile so frontend state stays in sync
     res.json({
       _id: updatedUser._id, 
       username: updatedUser.username, 
@@ -390,6 +399,7 @@ const updateUserProfile = async (req, res) => {
       bio: updatedUser.bio, 
       address: updatedUser.address, 
       profilePicture: updatedUser.profilePicture,
+      coverPhoto: updatedUser.coverPhoto,
       isGoogleUser: updatedUser.isGoogleUser, 
       token: generateToken(updatedUser._id),
     });

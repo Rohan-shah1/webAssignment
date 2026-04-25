@@ -74,7 +74,7 @@ const normalizeIngredientsAi = async (req, res) => {
     }
 
     const { ingredients, baseQty = 1, desiredQty = 1 } = req.body || {};
-    
+
     // Normalize input format: handle both comma-separated strings and arrays
     const list = Array.isArray(ingredients)
       ? ingredients

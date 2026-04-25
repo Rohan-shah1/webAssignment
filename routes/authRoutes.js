@@ -129,7 +129,10 @@ router.post('/resend-otp', resendOtp);
  */
 router.route('/profile')
   .get(protect, getUserProfile)
-  .put(protect, upload.single('profilePicture'), updateUserProfile);
+  .put(protect, upload.fields([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'coverPhoto', maxCount: 1 }
+  ]), updateUserProfile);
 
 /**
  * @swagger
