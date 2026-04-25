@@ -112,11 +112,13 @@ const Register = () => {
         
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group mb-4">
-            <label>Username</label>
+            <label htmlFor="username">Username</label>
             <div className="ds-input-group">
               <Icon name="user" size={20} className="ds-muted" />
               <input 
                 type="text" 
+                id="username"
+                name="username"
                 placeholder="Chef Gordon" 
                 value={formData.username}
                 onChange={e => setFormData({...formData, username: e.target.value})}
@@ -127,11 +129,13 @@ const Register = () => {
           </div>
 
           <div className="form-group mb-4">
-            <label>Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <div className="ds-input-group">
               <Icon name="mail" size={20} className="ds-muted" />
               <input 
                 type="email" 
+                id="email"
+                name="email"
                 placeholder="name@example.com" 
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
@@ -142,11 +146,13 @@ const Register = () => {
           </div>
           
           <div className="form-group mb-4">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <div className="ds-input-group">
               <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
+                id="password"
+                name="password"
                 placeholder="••••••••" 
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
@@ -157,11 +163,13 @@ const Register = () => {
           </div>
 
           <div className="form-group mb-6">
-            <label>Confirm Password</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <div className="ds-input-group">
               <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
+                id="confirmPassword"
+                name="confirmPassword"
                 placeholder="••••••••" 
                 value={formData.confirmPassword}
                 onChange={e => setFormData({...formData, confirmPassword: e.target.value})}

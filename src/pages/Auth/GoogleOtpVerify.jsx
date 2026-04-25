@@ -79,14 +79,17 @@ const GoogleOtpVerify = () => {
           </div>
 
           <div className="form-group mb-6">
-            <label>Verification Code</label>
+            <label htmlFor="otp">Verification Code</label>
             <input 
               type="text" 
+              id="otp"
+              name="otp"
               maxLength="6"
               placeholder="000000"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
               className="text-center font-bold text-xl tracking-widest"
+              autoFocus
             />
           </div>
 

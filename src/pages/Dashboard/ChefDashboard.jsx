@@ -33,6 +33,7 @@ const ChefDashboard = () => {
   const [recipeImage, setRecipeImage] = useState(null);
   const [followedChefs, setFollowedChefs] = useState([]);
   const [followedLoading, setFollowedLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
 
   if (!userInfo) {
     return (
@@ -108,6 +109,7 @@ const ChefDashboard = () => {
         setLoading(true);
         const data = await API.getChefDetails(userInfo._id);
         setRecipes(data.recipes);
+        setFollowersCount(data.followersCount || 0);
       } catch (error) {
         console.error('Error fetching dashboard recipes:', error);
       } finally {
@@ -229,7 +231,55 @@ const ChefDashboard = () => {
       );
     }
 
+    if (activeTab === 'analytics') {
+      const totalLikes = recipes.reduce((sum, r) => sum + (r.likes?.length || 0), 0);
+      return (
+        <div className="dashboard-panel">
+          <div className="panel-header">
+            <h2>Chef Analytics</h2>
+          </div>
+          <div className="header-line-sm mb-6"></div>
+          
+          <div className="analytics-grid">
+            <div className="analytics-card">
+              <div className="analytics-icon-bg primary">
+                <Icon name="users" size={24} filter="white" />
+              </div>
+              <div className="analytics-info">
+                <span className="analytics-label">Followers</span>
+                <span className="analytics-value">{followersCount}</span>
+              </div>
+            </div>
 
+            <div className="analytics-card">
+              <div className="analytics-icon-bg secondary">
+                <Icon name="book-open" size={24} filter="white" />
+              </div>
+              <div className="analytics-info">
+                <span className="analytics-label">Total Recipes</span>
+                <span className="analytics-value">{recipes.length}</span>
+              </div>
+            </div>
+
+            <div className="analytics-card">
+              <div className="analytics-icon-bg danger">
+                <Icon name="heart" size={24} filter="white" />
+              </div>
+              <div className="analytics-info">
+                <span className="analytics-label">Total Likes</span>
+                <span className="analytics-value">{totalLikes}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <h3>Recent Performance</h3>
+            <div className="header-line-sm mb-4"></div>
+            <p className="text-secondary text-sm">Your most liked recipe has <strong>{Math.max(...recipes.map(r => r.likes?.length || 0), 0)}</strong> likes.</p>
+          </div>
+        </div>
+      );
+    }
   };
 
   return (
@@ -269,6 +319,14 @@ const ChefDashboard = () => {
                 <Icon name="book-open" size={20} /> My Recipes
               </button>
             )}
+            {!isFoodLover && !isAdmin && (
+              <button
+                className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+                onClick={() => setActiveTab('analytics')}
+              >
+                <Icon name="bar-chart-2" size={20} /> Analytics
+              </button>
+            )}
 
 
           </nav>
@@ -291,18 +349,22 @@ const ChefDashboard = () => {
 
               <form onSubmit={handleRecipeSubmit}>
                 <div className="recipe-form-group">
-                  <label>Recipe Image</label>
+                  <label htmlFor="recipeImage">Recipe Image</label>
                   <input
                     type="file"
+                    id="recipeImage"
+                    name="recipeImage"
                     accept="image/*"
                     className="ds-input"
                     onChange={e => setRecipeImage(e.target.files[0])}
                   />
                 </div>
                 <div className="recipe-form-group">
-                  <label>Recipe Title</label>
+                  <label htmlFor="title">Recipe Title</label>
                   <input
                     type="text"
+                    id="title"
+                    name="title"
                     className="ds-input"
                     required
                     placeholder="e.g. Classic Beef Wellington"
@@ -312,8 +374,10 @@ const ChefDashboard = () => {
                 </div>
 
                 <div className="recipe-form-group">
-                  <label>Ingredients (comma separated)</label>
+                  <label htmlFor="ingredients">Ingredients (comma separated)</label>
                   <textarea
+                    id="ingredients"
+                    name="ingredients"
                     rows="3"
                     className="ds-textarea"
                     required
@@ -324,8 +388,10 @@ const ChefDashboard = () => {
                 </div>
 
                 <div className="recipe-form-group">
-                  <label>Cooking Instructions</label>
+                  <label htmlFor="instructions">Cooking Instructions</label>
                   <textarea
+                    id="instructions"
+                    name="instructions"
                     rows="5"
                     className="ds-textarea"
                     required
@@ -337,8 +403,10 @@ const ChefDashboard = () => {
 
                 <div className="recipe-form-group grid-3">
                   <div>
-                    <label>Category</label>
+                    <label htmlFor="category">Category</label>
                     <select
+                      id="category"
+                      name="category"
                       className="ds-select"
                       value={recipeData.category}
                       onChange={e => setRecipeData({ ...recipeData, category: e.target.value })}
@@ -351,8 +419,10 @@ const ChefDashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label>Difficulty</label>
+                    <label htmlFor="difficulty">Difficulty</label>
                     <select
+                      id="difficulty"
+                      name="difficulty"
                       className="ds-select"
                       value={recipeData.difficulty}
                       onChange={e => setRecipeData({ ...recipeData, difficulty: e.target.value })}
@@ -363,9 +433,11 @@ const ChefDashboard = () => {
                     </select>
                   </div>
                   <div>
-                    <label>Prep Time (mins)</label>
+                    <label htmlFor="prepTime">Prep Time (mins)</label>
                     <input
                       type="number"
+                      id="prepTime"
+                      name="prepTime"
                       min="0"
                       className="ds-input"
                       value={recipeData.prepTime}

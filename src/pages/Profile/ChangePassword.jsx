@@ -59,11 +59,13 @@ const ChangePassword = () => {
 
         <form onSubmit={handleSubmit} className="card-box space-y-6">
           <div className="form-group">
-            <label>Current Password</label>
+            <label htmlFor="currentPassword">Current Password</label>
             <div className="input-group">
               <Icon name="lock" size={18} className="input-icon" />
               <input 
                 type="password" 
+                id="currentPassword"
+                name="currentPassword"
                 required
                 placeholder="Enter current password"
                 value={formData.currentPassword}
@@ -73,11 +75,13 @@ const ChangePassword = () => {
           </div>
 
           <div className="form-group">
-            <label>New Password</label>
+            <label htmlFor="newPassword">New Password</label>
             <div className="input-group">
               <Icon name="shield-check" size={18} className="input-icon" />
               <input 
                 type="password" 
+                id="newPassword"
+                name="newPassword"
                 required
                 placeholder="Min 6 characters"
                 value={formData.newPassword}
@@ -87,11 +91,13 @@ const ChangePassword = () => {
           </div>
 
           <div className="form-group">
-            <label>Confirm New Password</label>
+            <label htmlFor="confirmPassword">Confirm New Password</label>
             <div className="input-group">
               <Icon name="check-circle" size={18} className="input-icon" />
               <input 
                 type="password" 
+                id="confirmPassword"
+                name="confirmPassword"
                 required
                 placeholder="Repeat new password"
                 value={formData.confirmPassword}

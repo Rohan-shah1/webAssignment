@@ -63,11 +63,13 @@ const ForgotPassword = () => {
         {step === 1 ? (
           <form onSubmit={handleRequestOtp} className="auth-form">
             <div className="form-group">
-              <label>Email Address</label>
+              <label htmlFor="email">Email Address</label>
               <div className="input-group">
                 <Icon name="mail" size={20} className="input-icon" />
                 <input 
                   type="email" 
+                  id="email"
+                  name="email"
                   placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -82,9 +84,11 @@ const ForgotPassword = () => {
         ) : (
           <form onSubmit={handleReset} className="auth-form">
             <div className="form-group">
-              <label>Reset Code</label>
+              <label htmlFor="otp">Reset Code</label>
               <input 
                 type="text" 
+                id="otp"
+                name="otp"
                 placeholder="000000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
@@ -92,11 +96,13 @@ const ForgotPassword = () => {
               />
             </div>
             <div className="form-group">
-              <label>New Password</label>
+              <label htmlFor="newPassword">New Password</label>
               <div className="input-group">
                 <Icon name="key" size={20} className="input-icon" />
                 <input 
                   type="password" 
+                  id="newPassword"
+                  name="newPassword"
                   placeholder="••••••••"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}

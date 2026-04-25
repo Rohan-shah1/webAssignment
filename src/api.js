@@ -79,7 +79,7 @@ export const resendOtp = (email) =>
   });
 
 export const verifyEmailOtp = (email, otp, role) => 
-  fetchWithAuth('/auth/verify-otp', { 
+  fetchWithAuth('/auth/verify-email-otp', { 
     method: 'POST', 
     body: JSON.stringify({ email, otp, role }) 
   });

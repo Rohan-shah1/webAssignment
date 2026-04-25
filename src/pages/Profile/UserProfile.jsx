@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import API from '../../api';
@@ -22,8 +22,39 @@ const UserProfile = () => {
     email: userInfo?.email || '',
     bio: userInfo?.bio || '',
     address: userInfo?.address || '',
-    profilePicture: null // File object
+    profilePicture: null,
+    coverPhoto: null
   });
+  const [previews, setPreviews] = useState({
+    profilePicture: null,
+    coverPhoto: null
+  });
+
+  // Sync form with userInfo when it updates (e.g. after save)
+  useEffect(() => {
+    if (userInfo) {
+      setFormData({
+        username: userInfo.username || '',
+        email: userInfo.email || '',
+        bio: userInfo.bio || '',
+        address: userInfo.address || '',
+        profilePicture: null,
+        coverPhoto: null
+      });
+      setPreviews({
+        profilePicture: null,
+        coverPhoto: null
+      });
+    }
+  }, [userInfo]);
+
+  const handleFileChange = (e, field) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, [field]: file });
+      setPreviews({ ...previews, [field]: URL.createObjectURL(file) });
+    }
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -34,13 +65,10 @@ const UserProfile = () => {
       data.append('bio', formData.bio);
       data.append('address', formData.address);
       if (formData.profilePicture) data.append('profilePicture', formData.profilePicture);
-      if (currentPassword && newPassword) {
-        data.append('currentPassword', currentPassword);
-        data.append('newPassword', newPassword);
-      }
-
+      if (formData.coverPhoto) data.append('coverPhoto', formData.coverPhoto);
       const updatedUser = await API.updateProfile(data);
       login(updatedUser);
+      setPreviews({ profilePicture: null, coverPhoto: null });
       toast.success('Profile updated successfully!');
     } catch (err) {
       toast.error(err.message || 'Update failed');
@@ -55,20 +83,46 @@ const UserProfile = () => {
         <aside className="profile-sidebar card-box">
           <div className="avatar-section">
             <div className="avatar-preview">
-              <img src={userInfo?.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'} alt="Profile" />
-              <label className="avatar-edit-btn">
+              <img src={previews.profilePicture || userInfo?.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80'} alt="Profile" />
+              <label className="avatar-edit-btn" htmlFor="profilePicture">
                 <Icon name="camera" size={16} filter="white" />
                 <input 
                   type="file" 
+                  id="profilePicture"
+                  name="profilePicture"
                   hidden 
                   accept="image/*"
-                  onChange={(e) => setFormData({ ...formData, profilePicture: e.target.files[0] })}
+                  onChange={(e) => handleFileChange(e, 'profilePicture')}
                 />
               </label>
             </div>
             <h2>{userInfo?.username}</h2>
             <p className="text-secondary">{userInfo?.role}</p>
           </div>
+
+          {userInfo?.role === 'Chef' && (
+            <div className="cover-photo-edit mt-8">
+              <label className="text-sm font-bold mb-2 block">Profile Header Background</label>
+              <div className="cover-preview-box">
+                <img 
+                  src={previews.coverPhoto || userInfo?.coverPhoto || 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80'} 
+                  alt="Cover" 
+                />
+                <label className="cover-edit-overlay" htmlFor="coverPhoto">
+                  <Icon name="image" size={20} filter="white" />
+                  <span>Change Background</span>
+                  <input 
+                    type="file" 
+                    id="coverPhoto"
+                    name="coverPhoto"
+                    hidden 
+                    accept="image/*"
+                    onChange={(e) => handleFileChange(e, 'coverPhoto')}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
           
           <nav className="profile-nav mt-8">
             <button className="active"><Icon name="user" size={18} /> Account Details</button>
@@ -85,31 +139,35 @@ const UserProfile = () => {
           <form onSubmit={handleUpdate} className="profile-form mt-6">
             <div className="form-grid">
               <div className="form-group">
-                <label>Username</label>
+                <label htmlFor="username">Username</label>
                 <div className="input-group">
                   <Icon name="user" size={18} className="input-icon" />
                   <input 
                     type="text" 
+                    id="username"
+                    name="username"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   />
                 </div>
               </div>
               <div className="form-group">
-                <label>Email Address</label>
+                <label htmlFor="email">Email Address</label>
                 <div className="input-group disabled">
                   <Icon name="mail" size={18} className="input-icon" />
-                  <input type="email" value={formData.email} disabled />
+                  <input type="email" id="email" name="email" value={formData.email} disabled />
                 </div>
               </div>
             </div>
 
             <div className="form-group mt-4">
-              <label>Address & Country</label>
+              <label htmlFor="address">Address & Country</label>
               <div className="input-group">
                 <Icon name="map-pin" size={18} className="input-icon" />
                 <input 
                   type="text" 
+                  id="address"
+                  name="address"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="e.g. Kathmandu, Nepal"
@@ -119,9 +177,11 @@ const UserProfile = () => {
 
             {userInfo?.role !== 'Admin' && (
               <div className="form-group mt-4">
-                <label>Bio</label>
+                <label htmlFor="bio">Bio</label>
                 <textarea 
                   className="modern-input"
+                  id="bio"
+                  name="bio"
                   rows="4"
                   value={formData.bio}
                   onChange={(e) => setFormData({ ...formData, bio: e.target.value })}

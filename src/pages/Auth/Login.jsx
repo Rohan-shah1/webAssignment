@@ -96,11 +96,13 @@ const Login = () => {
         
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group mb-6">
-            <label>Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <div className="ds-input-group">
               <Icon name="mail" size={20} className="ds-muted" />
               <input 
                 type="email" 
+                id="email"
+                name="email"
                 placeholder="name@example.com" 
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
@@ -111,11 +113,13 @@ const Login = () => {
           </div>
           
           <div className="form-group mb-4">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <div className="ds-input-group">
               <Icon name="lock" size={20} className="ds-muted" />
               <input 
                 type="password" 
+                id="password"
+                name="password"
                 placeholder="••••••••" 
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}

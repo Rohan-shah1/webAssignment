@@ -115,7 +115,7 @@ const RecipeFeed = () => {
               className="recipe-card ds-link-card"
             >
               <div className="recipe-img-container">
-                <img src={recipe.image || '../../assets/recipe-burger.jpg'} alt={recipe.title} />
+                <img src={recipe.image || 'https://images.unsplash.com/photo-1600891964092-4316c288032e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'} alt={recipe.title} />
                 <span className="recipe-difficulty">{recipe.difficulty || 'Medium'}</span>
               </div>
               <div className="recipe-info">

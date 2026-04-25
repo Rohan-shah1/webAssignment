@@ -17,8 +17,7 @@ const ChefList = ({ isDashboardMode = false }) => {
           id: chef._id,
           name: chef.username,
           specialty: chef.bio ? (chef.bio.substring(0, 30) + '...') : 'Culinary Expert',
-          rating: 4.8, // Default rating for now
-          image: chef.profilePicture || '../../assets/hero-food.jpg',
+          image: chef.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
           recipesCount: chef.recipesCount || 0
         }));
         setChefs(mappedChefs);
@@ -73,14 +72,6 @@ const ChefList = ({ isDashboardMode = false }) => {
                   <h3>{chef.name}</h3>
                   <p className="specialty">{chef.specialty}</p>
                   <div className="chef-stats">
-                    <span className="rating">
-                      <img 
-                        src="https://unpkg.com/lucide-static@latest/icons/star.svg" 
-                        alt="Rating" 
-                        style={{ width: 16, height: 16, filter: 'invert(58%) sepia(93%) saturate(1352%) hue-rotate(359deg) brightness(102%) contrast(107%)' }} 
-                      /> 
-                      {chef.rating}
-                    </span>
                     <span className="recipes-count">{chef.recipesCount} Recipes</span>
                   </div>
                 </div>

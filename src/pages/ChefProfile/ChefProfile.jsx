@@ -36,10 +36,10 @@ const ChefProfile = () => {
         setChef({
           id: data.chef._id,
           name: data.chef.username,
-          specialty: 'Executive Chef',
+          specialty: data.chef.bio ? (data.chef.bio.split('.')[0]) : 'Master Culinary Artist',
           location: data.chef.address || 'Global',
           bio: data.chef.bio || 'Professional chef sharing the art of fine dining and signature recipes on RecipeNest.',
-          coverImage: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80',
+          coverImage: data.chef.coverPhoto || 'https://images.unsplash.com/photo-1495195129352-aeb325a55b65?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80',
           profileImage: data.chef.profilePicture || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80',
           followersCount: data.followersCount || 0,
           recipes: data.recipes.map(r => ({
