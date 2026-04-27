@@ -1,194 +1,155 @@
-// Centralized API Base URL configuration
-// Using Vite's env variables for flexibility between dev and production
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import axios from 'axios';
 
-/**
- * Custom Fetch Wrapper
- * This function handles common API tasks like:
- * 1. Attaching the JWT token from localStorage for authenticated requests.
- * 2. Setting correct Content-Type headers.
- * 3. Handling both JSON and FormData (for image uploads).
- * 4. Centralized error handling.
- */
-const fetchWithAuth = async (endpoint, options = {}) => {
-  // Pull user info (including the token) from persistent storage
-  const userInfo = localStorage.getItem('userInfo') 
-    ? JSON.parse(localStorage.getItem('userInfo')) 
-    : null;
+// ── Axios Instance ────────────────────────────────────────────────────────────
+// Centralised base URL — reads from .env (VITE_API_URL) or falls back to /api
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  const headers = {
-    ...options.headers,
-  };
+// ── Request Interceptor ───────────────────────────────────────────────────────
+// Before every outgoing request, read the JWT from localStorage and attach it.
+// This replaces the per-function token injection in the old fetchWithAuth wrapper.
+api.interceptors.request.use(
+  (config) => {
+    const userInfo = localStorage.getItem('userInfo')
+      ? JSON.parse(localStorage.getItem('userInfo'))
+      : null;
 
-  /**
-   * Header Management
-   * Important: We don't set 'Content-Type' if the body is FormData.
-   * The browser needs to set the 'boundary' string itself for file uploads to work.
-   */
-  if (!(options.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
+    if (userInfo?.token) {
+      config.headers.Authorization = `Bearer ${userInfo.token}`;
+    }
+
+    // If we're sending FormData, remove the default Content-Type so that
+    // the browser can set the correct multipart boundary automatically.
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ── Response Interceptor ──────────────────────────────────────────────────────
+// Unwrap the response so callers get `data` directly (same as old fetchWithAuth).
+// On error, extract the server's message and re-throw a clean Error object.
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    const message =
+      error.response?.data?.message ||
+      error.message ||
+      'An unexpected error occurred.';
+    return Promise.reject(new Error(message));
   }
+);
 
-  // If a user is logged in, attach their token to the 'Authorization' header
-  if (userInfo && userInfo.token) {
-    headers.Authorization = `Bearer ${userInfo.token}`;
-  }
+// ── Auth APIs ─────────────────────────────────────────────────────────────────
+export const login = (email, password) =>
+  api.post('/auth/login', { email, password });
 
-  // Debug log to keep track of network activity during development
-  console.log(`API Call: ${options.method || 'GET'} ${BASE_URL}${endpoint}`);
+export const register = (userData) =>
+  api.post('/auth/register', userData);
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+export const getProfile = () =>
+  api.get('/auth/profile');
 
-  const data = await response.json();
+export const updateProfile = (userData) =>
+  api.put('/auth/profile', userData);
 
-  // Handle non-2xx status codes globally
-  if (!response.ok) {
-    throw new Error(data.message || 'An unexpected error occurred during the API call.');
-  }
+export const resendOtp = (email) =>
+  api.post('/auth/resend-otp', { email });
 
-  return data;
-};
+export const verifyEmailOtp = (email, otp, role) =>
+  api.post('/auth/verify-email-otp', { email, otp, role });
 
-// --- Auth APIs --- //
-export const login = (email, password) => 
-  fetchWithAuth('/auth/login', { 
-    method: 'POST', 
-    body: JSON.stringify({ email, password }) 
-  });
+export const forgotPassword = (email) =>
+  api.post('/auth/forgot-password', { email });
 
-export const register = (userData) => 
-  fetchWithAuth('/auth/register', { 
-    method: 'POST', 
-    body: JSON.stringify(userData) 
-  });
+export const verifyResetOtp = (email, otp) =>
+  api.post('/auth/verify-reset-otp', { email, otp });
 
-export const getProfile = () => fetchWithAuth('/auth/profile');
-export const updateProfile = (userData) => 
-  fetchWithAuth('/auth/profile', { 
-    method: 'PUT', 
-    body: userData // This can be FormData or JSON
-  });
+export const resetPassword = (email, otp, newPassword) =>
+  api.post('/auth/reset-password', { email, otp, newPassword });
 
-export const resendOtp = (email) => 
-  fetchWithAuth('/auth/resend-otp', { 
-    method: 'POST', 
-    body: JSON.stringify({ email }) 
-  });
+export const googleAuth = (token) =>
+  api.post('/auth/google', { idToken: token });
 
-export const verifyEmailOtp = (email, otp, role) => 
-  fetchWithAuth('/auth/verify-email-otp', { 
-    method: 'POST', 
-    body: JSON.stringify({ email, otp, role }) 
-  });
+export const verifyGoogleOtp = (email, otp, role) =>
+  api.post('/auth/google/verify-otp', { email, otp, role });
 
-export const forgotPassword = (email) => 
-  fetchWithAuth('/auth/forgot-password', { 
-    method: 'POST', 
-    body: JSON.stringify({ email }) 
-  });
+export const changePassword = (currentPassword, newPassword) =>
+  api.put('/auth/change-password', { currentPassword, newPassword });
 
-export const verifyResetOtp = (email, otp) => 
-  fetchWithAuth('/auth/verify-reset-otp', { 
-    method: 'POST', 
-    body: JSON.stringify({ email, otp }) 
-  });
+// ── User / Chef APIs ──────────────────────────────────────────────────────────
+export const getChefs = () =>
+  api.get('/users/chefs');
 
-export const resetPassword = (email, otp, newPassword) => 
-  fetchWithAuth('/auth/reset-password', { 
-    method: 'POST', 
-    body: JSON.stringify({ email, otp, newPassword }) 
-  });
+export const getChefDetails = (id) =>
+  api.get(`/users/chefs/${id}`);
 
-export const googleAuth = (token) => 
-  fetchWithAuth('/auth/google', { 
-    method: 'POST', 
-    body: JSON.stringify({ idToken: token }) 
-  });
+export const getFollowedChefs = () =>
+  api.get('/users/followed-chefs');
 
-export const verifyGoogleOtp = (email, otp, role) => 
-  fetchWithAuth('/auth/google/verify-otp', { 
-    method: 'POST', 
-    body: JSON.stringify({ email, otp, role }) 
-  });
+export const toggleFollowChef = (id) =>
+  api.put(`/users/followed-chefs/${id}`);
 
-export const changePassword = (currentPassword, newPassword) => 
-  fetchWithAuth('/auth/change-password', { 
-    method: 'PUT', 
-    body: JSON.stringify({ currentPassword, newPassword }) 
-  });
+// ── Recipe APIs ───────────────────────────────────────────────────────────────
+export const fetchRecipes = (query = '') =>
+  api.get(`/recipes${query}`);
 
-// User/Chef APIs
-export const getChefs = () => fetchWithAuth('/users/chefs');
-export const getChefDetails = (id) => fetchWithAuth(`/users/chefs/${id}`);
-export const getFollowedChefs = () => fetchWithAuth('/users/followed-chefs');
-export const toggleFollowChef = (id) => fetchWithAuth(`/users/followed-chefs/${id}`, { method: 'PUT' });
+export const fetchRecipeById = (id) =>
+  api.get(`/recipes/${id}`);
 
-// --- Recipe APIs --- //
-export const fetchRecipes = (query = '') => fetchWithAuth(`/recipes${query}`);
-export const fetchRecipeById = (id) => fetchWithAuth(`/recipes/${id}`);
-export const createRecipe = (recipeData) => 
-  fetchWithAuth('/recipes', { 
-    method: 'POST', 
-    body: recipeData instanceof FormData ? recipeData : JSON.stringify(recipeData)
-  });
+export const createRecipe = (recipeData) =>
+  api.post('/recipes', recipeData);
 
-export const updateRecipe = (id, recipeData) => 
-  fetchWithAuth(`/recipes/${id}`, { 
-    method: 'PUT', 
-    body: recipeData instanceof FormData ? recipeData : JSON.stringify(recipeData) 
-  });
+export const updateRecipe = (id, recipeData) =>
+  api.put(`/recipes/${id}`, recipeData);
 
-export const deleteRecipe = (id, data) => 
-  fetchWithAuth(`/recipes/${id}`, { 
-    method: 'DELETE',
-    body: data ? JSON.stringify(data) : undefined
-  });
+export const deleteRecipe = (id, data) =>
+  api.delete(`/recipes/${id}`, { data });
 
-export const likeRecipe = (id) => 
-  fetchWithAuth(`/recipes/${id}/like`, { method: 'PUT' });
+export const likeRecipe = (id) =>
+  api.put(`/recipes/${id}/like`);
 
-export const addComment = (id, text) => 
-  fetchWithAuth(`/recipes/${id}/comment`, { 
-    method: 'POST', 
-    body: JSON.stringify({ text }) 
-  });
+export const addComment = (id, text) =>
+  api.post(`/recipes/${id}/comment`, { text });
 
-export const reactToComment = (id, commentId, emoji) => 
-  fetchWithAuth(`/recipes/${id}/comment/${commentId}/react`, { 
-    method: 'PUT', 
-    body: JSON.stringify({ emoji }) 
-  });
+export const reactToComment = (id, commentId, emoji) =>
+  api.put(`/recipes/${id}/comment/${commentId}/react`, { emoji });
 
-export const replyToComment = (id, commentId, text) => 
-  fetchWithAuth(`/recipes/${id}/comment/${commentId}/reply`, { 
-    method: 'POST', 
-    body: JSON.stringify({ text }) 
-  });
+export const replyToComment = (id, commentId, text) =>
+  api.post(`/recipes/${id}/comment/${commentId}/reply`, { text });
 
-export const getSavedRecipes = () => fetchWithAuth('/users/saved-recipes');
-export const toggleSavedRecipe = (id) => 
-  fetchWithAuth(`/users/saved-recipes/${id}`, { method: 'PUT' });
+// ── Saved Recipes ─────────────────────────────────────────────────────────────
+export const getSavedRecipes = () =>
+  api.get('/users/saved-recipes');
 
-// Admin APIs
-export const adminGetUsers = () => fetchWithAuth('/admin/users');
-export const adminDeleteUser = (id) => fetchWithAuth(`/admin/users/${id}`, { method: 'DELETE' });
-export const adminGetRecipes = () => fetchWithAuth('/admin/recipes');
-export const adminUpdateProfile = (userData) => 
-  fetchWithAuth('/admin/profile', { 
-    method: 'PUT', 
-    body: userData 
-  });
+export const toggleSavedRecipe = (id) =>
+  api.put(`/users/saved-recipes/${id}`);
 
-// Ingredients (optional AI normalization)
+// ── Admin APIs ────────────────────────────────────────────────────────────────
+export const adminGetUsers = () =>
+  api.get('/admin/users');
+
+export const adminDeleteUser = (id) =>
+  api.delete(`/admin/users/${id}`);
+
+export const adminGetRecipes = () =>
+  api.get('/admin/recipes');
+
+export const adminUpdateProfile = (userData) =>
+  api.put('/admin/profile', userData);
+
+// ── AI Ingredient Scaling ─────────────────────────────────────────────────────
 export const normalizeIngredients = (ingredients, baseQty = 1, desiredQty = 1) =>
-  fetchWithAuth('/ingredients/normalize', {
-    method: 'POST',
-    body: JSON.stringify({ ingredients, baseQty, desiredQty }),
-  });
+  api.post('/ingredients/normalize', { ingredients, baseQty, desiredQty });
 
+// ── Default Export ────────────────────────────────────────────────────────────
 const API = {
   login,
   register,
