@@ -29,8 +29,9 @@ const ChangePassword = () => {
       return toast.error('New passwords do not match');
     }
     
-    if (formData.newPassword.length < 6) {
-      return toast.error('Password must be at least 6 characters');
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
+    if (!passwordRegex.test(formData.newPassword)) {
+      return toast.error('Password must be between 8 and 25 characters long and contain both letters and numbers.');
     }
 
     try {

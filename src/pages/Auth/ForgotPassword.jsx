@@ -39,6 +39,13 @@ const ForgotPassword = () => {
   const handleReset = async (e) => {
     e.preventDefault();
     if (!otp || !newPassword) return toast.error('Fill all fields');
+
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
+    if (!passwordRegex.test(newPassword)) {
+      toast.error('Password must be between 8 and 25 characters long and contain both letters and numbers.');
+      return;
+    }
+
     try {
       setLoading(true);
       await API.resetPassword(email, otp, newPassword);

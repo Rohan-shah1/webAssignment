@@ -74,9 +74,9 @@ const Register = () => {
       return;
     }
 
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
     if (!passwordRegex.test(formData.password)) {
-      toast.error('Password must be at least 8 characters long and contain both letters and numbers.');
+      toast.error('Password must be between 8 and 25 characters long and contain both letters and numbers.');
       return;
     }
 
