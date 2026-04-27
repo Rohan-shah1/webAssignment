@@ -34,10 +34,10 @@ const registerUser = async (req, res) => {
     return res.status(400).json({ message: 'Please provide a valid email address.' });
   }
 
-  // Strong password validation: Min 8 characters, at least 1 letter and 1 number
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+  // Strong password validation: Min 8 characters, max 25, at least 1 letter and 1 number
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
   if (!passwordRegex.test(password)) {
-    return res.status(400).json({ message: 'Password must be at least 8 characters long and contain both letters and numbers.' });
+    return res.status(400).json({ message: 'Password must be between 8 and 25 characters long and contain both letters and numbers.' });
   }
 
   try {
@@ -360,6 +360,10 @@ const updateUserProfile = async (req, res) => {
     user.address = req.body.address !== undefined ? req.body.address : user.address;
 
     if (req.body.password && !user.isGoogleUser) {
+      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
+      if (!passwordRegex.test(req.body.password)) {
+        return res.status(400).json({ message: 'Password must be between 8 and 25 characters long and contain both letters and numbers.' });
+      }
       user.password = req.body.password;
     }
 
@@ -455,6 +459,12 @@ const verifyResetOtp = async (req, res) => {
 // @access  Public
 const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
+
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({ message: 'Password must be between 8 and 25 characters long and contain both letters and numbers.' });
+  }
+
   try {
     const user = await User.findOne({ email });
     if (!user || !user.resetPasswordOtp) return res.status(400).json({ message: 'Invalid request' });
@@ -477,6 +487,12 @@ const resetPassword = async (req, res) => {
 // @access  Private
 const changePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
+
+  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,25}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({ message: 'Password must be between 8 and 25 characters long and contain both letters and numbers.' });
+  }
+
   try {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
