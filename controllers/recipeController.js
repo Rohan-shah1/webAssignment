@@ -62,7 +62,11 @@ const getRecipeById = async (req, res) => {
       res.status(404).json({ message: 'We couldn\'t find that recipe. It might have been deleted.' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching recipe details' });
+    console.error(`Error fetching recipe with ID ${req.params.id}:`, error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'Invalid recipe ID format' });
+    }
+    res.status(500).json({ message: 'Error fetching recipe details', error: error.message });
   }
 };
 
@@ -111,7 +115,7 @@ const createRecipe = async (req, res) => {
       difficulty,
       prepTime,
       baseQty: baseQty ? Number(baseQty) : 1,
-      baseUnit: baseUnit || 'kg',
+      baseUnit: baseUnit || 'servings',
       chef: req.user._id, // Assign the currently logged-in user as the chef
     });
 
@@ -192,7 +196,7 @@ const deleteRecipe = async (req, res) => {
         return res.status(403).json({ message: 'Not authorized to delete this recipe' });
       }
 
-      const { reason } = req.body;
+      const { reason } = req.body || {};
       if (req.user.role === 'Admin' && reason) {
         console.log(`[ADMIN ACTION] Recipe "${recipe.title}" deleted by Admin ${req.user.username}. Reason: ${reason}`);
         

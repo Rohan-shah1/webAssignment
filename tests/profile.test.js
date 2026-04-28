@@ -115,6 +115,6 @@ describe('Data Integrity Tests', () => {
       .send({ username: 'weakuser', email: 'weak@example.com', password: '123' });
 
     expect(res.statusCode).toEqual(400);
-    expect(res.body.message).toContain('Password must be at least 8 characters');
+    expect(res.body.message).toContain('Password must be between 8 and 25 characters long');
   });
 });
