@@ -43,10 +43,13 @@ const EmailOtpVerify = () => {
 
   const handleResend = async () => {
     try {
+      setLoading(true);
       await API.resendOtp(email);
       toast.success('A new OTP has been sent to your email.');
     } catch (err) {
       toast.error(err.message || 'Error resending OTP');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,7 +112,7 @@ const EmailOtpVerify = () => {
 
         <div className="auth-footer">
           <p>Didn't receive the code?</p>
-          <button className="btn-link" onClick={handleResend}>Resend OTP</button>
+          <button className="btn-link" onClick={handleResend} disabled={loading}>Resend OTP</button>
         </div>
       </div>
     </div>

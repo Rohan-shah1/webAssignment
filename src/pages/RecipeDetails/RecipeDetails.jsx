@@ -43,6 +43,7 @@ const RecipeDetails = () => {
   const [aiIngredients, setAiIngredients] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const pickerRef = useRef(null);
 
   useEffect(() => {
@@ -99,14 +100,22 @@ const RecipeDetails = () => {
     };
   }, [id, currentUser, navigate]);
 
+  // Ref to track the ingredients and baseQty to avoid redundant AI calls during real-time updates (likes/comments)
+  const lastProcessedRef = useRef('');
+
   useEffect(() => {
     const run = async () => {
       if (!recipe) return;
+      
+      const currentSignature = `${recipe.ingredients?.join('|')}-${recipe.baseQty}-${desiredQty}`;
+      if (currentSignature === lastProcessedRef.current) return;
+      
       try {
         setAiLoading(true);
         setAiError('');
         const res = await API.normalizeIngredients(recipe.ingredients, recipe.baseQty || 1, desiredQty || 1);
         setAiIngredients(res.items || []);
+        lastProcessedRef.current = currentSignature;
       } catch (error) {
         setAiIngredients([]);
         setAiError(error?.message || 'AI could not format ingredients right now.');
@@ -114,38 +123,58 @@ const RecipeDetails = () => {
         setAiLoading(false);
       }
     };
-    run();
-  }, [recipe, desiredQty]);
+
+    // Debounce the AI call slightly if the user is typing
+    const timeoutId = setTimeout(run, 400);
+    return () => clearTimeout(timeoutId);
+  }, [recipe?.ingredients, recipe?.baseQty, desiredQty]);
 
   const handleLike = async () => {
     if (!currentUser) { toast.error('Please login to like recipes'); return; }
+    if (isSubmitting) return;
     try {
+      setIsSubmitting(true);
       const likes = await API.likeRecipe(id);
       setRecipe(prev => ({ ...prev, likes }));
-    } catch { toast.error('Error liking recipe'); }
+    } catch { 
+      toast.error('Error liking recipe'); 
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveRecipe = async () => {
     if (!currentUser) { toast.error('Please login to save recipes'); return; }
+    if (isSubmitting) return;
     try {
+      setIsSubmitting(true);
       const updatedSaved = await API.toggleSavedRecipe(id);
       setSavedRecipes(updatedSaved);
       toast[updatedSaved.includes(id) ? 'success' : 'info'](
         updatedSaved.includes(id) ? 'Recipe bookmarked!' : 'Recipe removed from bookmarks'
       );
-    } catch { toast.error('Error saving recipe'); }
+    } catch { 
+      toast.error('Error saving recipe'); 
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleComment = async (e) => {
     e.preventDefault();
     if (!currentUser) { toast.error('Please login to comment'); return; }
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || isSubmitting) return;
     try {
+      setIsSubmitting(true);
       const updatedRecipe = await API.addComment(id, commentText);
       setRecipe(updatedRecipe);
       setCommentText('');
       toast.success('Comment added!');
-    } catch { toast.error('Error adding comment'); }
+    } catch { 
+      toast.error('Error adding comment'); 
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleReaction = async (commentId, emoji) => {
@@ -259,6 +288,7 @@ const RecipeDetails = () => {
             <button 
               className={`btn-action like ${recipe.likes?.includes(currentUser?._id) ? 'active' : ''}`}
               onClick={handleLike}
+              disabled={isSubmitting}
             >
               <Icon name="heart" size={20} filter={recipe.likes?.includes(currentUser?._id) ? 'var(--toast-error)' : 'var(--icon-filter)'} />
               <span>{recipe.likes?.length || 0}</span>
@@ -266,6 +296,7 @@ const RecipeDetails = () => {
             <button 
               className={`btn-action save ${savedRecipes.includes(id) ? 'active' : ''}`}
               onClick={handleSaveRecipe}
+              disabled={isSubmitting}
             >
               <Icon name="bookmark" size={20} filter={savedRecipes.includes(id) ? 'var(--primary-color)' : 'var(--icon-filter)'} />
             </button>
@@ -293,8 +324,8 @@ const RecipeDetails = () => {
           <div className="stat-item ai-stat">
             <Icon name="sparkles" size={20} filter="var(--primary-filter)" />
             <div>
-              <span className="stat-label">AI Intelligence</span>
-              <span className="stat-value">Smart Scaling</span>
+              <span className="stat-label">Base Quantity</span>
+              <span className="stat-value">{recipe.baseQty || 1} {recipe.baseUnit || 'servings'}</span>
             </div>
           </div>
         </div>
@@ -305,7 +336,7 @@ const RecipeDetails = () => {
               <div className="section-title-alt">
                 <h2>Ingredients <span className="ai-badge">AI</span></h2>
                 <div className="scaling-control">
-                  <span>Scale quantity:</span>
+                  <span>Scale to:</span>
                   <input 
                     type="text"
                     inputMode="decimal"
@@ -319,10 +350,10 @@ const RecipeDetails = () => {
                         e.currentTarget.blur();
                       }
                     }}
-                    placeholder="1"
-                    aria-label="Desired quantity in kilograms"
+                    placeholder={String(recipe.baseQty || 1)}
+                    aria-label={`Desired quantity in ${recipe.baseUnit || 'servings'}`}
                   />
-                  <span>kg</span>
+                  <span>{recipe.baseUnit || 'servings'}</span>
                 </div>
               </div>
               <div className="ingredients-table-head">
@@ -366,7 +397,7 @@ const RecipeDetails = () => {
                   onChange={(e) => setCommentText(e.target.value)}
                   disabled={!currentUser}
                 />
-                <button type="submit" disabled={!currentUser || !commentText.trim()}>
+                <button type="submit" disabled={!currentUser || !commentText.trim() || isSubmitting}>
                   <Icon name="send" size={18} filter="white" />
                 </button>
               </form>

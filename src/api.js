@@ -110,7 +110,7 @@ export const createRecipe = (recipeData) =>
 export const updateRecipe = (id, recipeData) =>
   api.put(`/recipes/${id}`, recipeData);
 
-export const deleteRecipe = (id, data) =>
+export const deleteRecipe = (id, data = {}) =>
   api.delete(`/recipes/${id}`, { data });
 
 export const likeRecipe = (id) =>

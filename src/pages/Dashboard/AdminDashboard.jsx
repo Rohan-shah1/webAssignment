@@ -19,6 +19,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
 
   useEffect(() => {
@@ -43,11 +44,14 @@ const AdminDashboard = () => {
   const deleteUser = async (id) => {
     if (window.confirm('Are you sure you want to delete this user? All their data will be lost.')) {
       try {
+        setSubmitting(true);
         await API.adminDeleteUser(id);
         setUsers(users.filter(u => u._id !== id));
         toast.success('User deleted');
       } catch (error) {
         toast.error('Failed to delete user');
+      } finally {
+        setSubmitting(false);
       }
     }
   };
@@ -66,12 +70,15 @@ const AdminDashboard = () => {
     }
 
     try {
+      setSubmitting(true);
       await API.deleteRecipe(deleteModal.recipeId, { reason: deleteModal.reason });
       setRecipes(recipes.filter(r => r._id !== deleteModal.recipeId));
       toast.success('Recipe deleted and feedback logged');
       setDeleteModal({ show: false, recipeId: null, reason: '' });
     } catch (error) {
       toast.error('Failed to delete recipe');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -137,7 +144,7 @@ const AdminDashboard = () => {
                           <span className={`badge ${u.role === 'Chef' ? 'primary' : ''}`}>{u.role}</span>
                         </td>
                         <td className="p-3 text-right">
-                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)} title="Delete User" style={{ display: 'inline-flex', marginLeft: 'auto' }}>
+                          <button className="btn-icon text-danger" onClick={() => deleteUser(u._id)} title="Delete User" disabled={submitting} style={{ display: 'inline-flex', marginLeft: 'auto' }}>
                             <Icon name="trash-2" size={18} />
                           </button>
                         </td>
@@ -176,7 +183,7 @@ const AdminDashboard = () => {
                       <Link to={`/recipe/${recipe._id}`} className="btn-icon text-primary" title="View Recipe">
                         <Icon name="eye" size={18} filter="var(--primary-color)" />
                       </Link>
-                      <button className="btn-icon text-danger" onClick={() => confirmDelete(recipe._id)} title="Delete Recipe">
+                      <button className="btn-icon text-danger" onClick={() => confirmDelete(recipe._id)} title="Delete Recipe" disabled={submitting}>
                         <Icon name="trash-2" size={18} />
                       </button>
                     </div>
@@ -199,8 +206,8 @@ const AdminDashboard = () => {
                       onChange={(e) => setDeleteModal({...deleteModal, reason: e.target.value})}
                     ></textarea>
                     <div className="flex justify-end gap-3">
-                      <button className="btn-pill outline" onClick={() => setDeleteModal({ show: false, recipeId: null, reason: '' })}>Cancel</button>
-                      <button className="btn-pill primary" onClick={deleteRecipe} style={{background: 'var(--toast-error)'}}>Delete Permanently</button>
+                      <button className="btn-pill outline" onClick={() => setDeleteModal({ show: false, recipeId: null, reason: '' })} disabled={submitting}>Cancel</button>
+                      <button className="btn-pill primary" onClick={deleteRecipe} disabled={submitting} style={{background: 'var(--toast-error)'}}>{submitting ? 'Deleting...' : 'Delete Permanently'}</button>
                     </div>
                   </div>
                 </div>
