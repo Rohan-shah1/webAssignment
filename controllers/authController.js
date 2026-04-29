@@ -20,9 +20,9 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
  * Instead of creating a User immediately, we store them in 'PendingRegistration'.
  * This ensures we don't have 'ghost' accounts from people who never verify their email.
  */
-const registerUser = async (req, res) => {
+async function registerUser(req, res) {
   const { username, email, password } = req.body;
-  
+
   // Strict Input Validation
   if (!username || !email || !password) {
     return res.status(400).json({ message: 'Please provide valid username, email, and password.' });
@@ -49,6 +49,7 @@ const registerUser = async (req, res) => {
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minute window for security
 
+
     // Upsert logic: if they try to register again before verifying, we just update the OTP
     await PendingRegistration.findOneAndUpdate(
       { email },
@@ -73,7 +74,7 @@ const registerUser = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Internal Server Error' });
   }
-};
+}
 
 /**
  * Verify OTP Logic
@@ -84,20 +85,20 @@ const verifyEmailOtp = async (req, res) => {
   try {
     // Find the temporary data we stored during the registerUser call
     const pendingData = await PendingRegistration.findOne({ email, type: 'regular_signup' });
-    
+
     if (!pendingData) return res.status(400).json({ message: 'No registration session found. Did it expire?' });
-    
+
     // Security: Check if 10 mins have passed
     if (Date.now() > pendingData.otpExpiry.getTime()) {
       return res.status(400).json({ message: 'This OTP has expired. Please request a new one.' });
     }
-    
+
     // Constant time comparison would be better here, but for an assignment this is standard
     if (pendingData.otp !== otp) return res.status(400).json({ message: 'The code you entered is incorrect.' });
 
     // Map registration data to final User model
     const { username, password } = pendingData.registrationData;
-    
+
     // Default to 'Food Lover' if something weird happens with the role selection
     const allowedRoles = ['Chef', 'Food Lover'];
     const safeRole = allowedRoles.includes(role) ? role : 'Food Lover';
@@ -111,10 +112,10 @@ const verifyEmailOtp = async (req, res) => {
     if (user) {
       // Return user data along with a freshly signed JWT token
       res.status(201).json({
-        _id: user._id, 
-        username: user.username, 
+        _id: user._id,
+        username: user.username,
         email: user.email,
-        role: user.role, 
+        role: user.role,
         bio: user.bio,
         address: user.address,
         profilePicture: user.profilePicture,
@@ -182,7 +183,7 @@ const loginUser = async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       res.json({
         _id: user._id, username: user.username, email: user.email,
-        role: user.role, bio: user.bio, address: user.address, 
+        role: user.role, bio: user.bio, address: user.address,
         profilePicture: user.profilePicture, coverPhoto: user.coverPhoto,
         isGoogleUser: user.isGoogleUser, token: generateToken(user._id),
       });
@@ -220,7 +221,7 @@ const googleAuth = async (req, res) => {
       if (!user.googleId) { user.googleId = googleId; await user.save(); }
       return res.json({
         _id: user._id, username: user.username, email: user.email,
-        role: user.role, bio: user.bio, address: user.address, 
+        role: user.role, bio: user.bio, address: user.address,
         profilePicture: user.profilePicture, coverPhoto: user.coverPhoto,
         isGoogleUser: true, token: generateToken(user._id),
       });
@@ -272,9 +273,9 @@ const googleAuth = async (req, res) => {
 const verifyGoogleOtp = async (req, res) => {
   const { email, otp, role } = req.body;
   try {
-    const pendingData = await PendingRegistration.findOne({ 
-      email, 
-      type: { $in: ['google_signup', 'google_link'] } 
+    const pendingData = await PendingRegistration.findOne({
+      email,
+      type: { $in: ['google_signup', 'google_link'] }
     });
 
     if (!pendingData) return res.status(400).json({ message: 'No OTP request found' });
@@ -292,7 +293,7 @@ const verifyGoogleOtp = async (req, res) => {
       user.googleId = pendingData.registrationData.googleId;
       user.isGoogleUser = true;
       if (!user.profilePicture && pendingData.registrationData.picture) {
-         user.profilePicture = pendingData.registrationData.picture;
+        user.profilePicture = pendingData.registrationData.picture;
       }
       await user.save();
     } else {
@@ -309,15 +310,15 @@ const verifyGoogleOtp = async (req, res) => {
     await PendingRegistration.deleteOne({ _id: pendingData._id });
 
     res.json({
-      _id: user._id, 
-      username: user.username, 
+      _id: user._id,
+      username: user.username,
       email: user.email,
-      role: user.role, 
-      bio: user.bio, 
-      address: user.address, 
+      role: user.role,
+      bio: user.bio,
+      address: user.address,
       profilePicture: user.profilePicture,
       coverPhoto: user.coverPhoto,
-      isGoogleUser: true, 
+      isGoogleUser: true,
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -334,7 +335,7 @@ const getUserProfile = async (req, res) => {
     if (req.user) {
       res.json({
         _id: req.user._id, username: req.user.username, email: req.user.email,
-        role: req.user.role, bio: req.user.bio, address: req.user.address, 
+        role: req.user.role, bio: req.user.bio, address: req.user.address,
         profilePicture: req.user.profilePicture, coverPhoto: req.user.coverPhoto,
         isGoogleUser: req.user.isGoogleUser,
       });
@@ -394,17 +395,17 @@ const updateUserProfile = async (req, res) => {
     }
 
     const updatedUser = await user.save();
-    
+
     res.json({
-      _id: updatedUser._id, 
-      username: updatedUser.username, 
+      _id: updatedUser._id,
+      username: updatedUser.username,
       email: updatedUser.email,
-      role: updatedUser.role, 
-      bio: updatedUser.bio, 
-      address: updatedUser.address, 
+      role: updatedUser.role,
+      bio: updatedUser.bio,
+      address: updatedUser.address,
       profilePicture: updatedUser.profilePicture,
       coverPhoto: updatedUser.coverPhoto,
-      isGoogleUser: updatedUser.isGoogleUser, 
+      isGoogleUser: updatedUser.isGoogleUser,
       token: generateToken(updatedUser._id),
     });
   } catch (error) {
